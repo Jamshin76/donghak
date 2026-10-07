@@ -256,7 +256,7 @@ const NEWS = [
  ["SK바이오팜 상장 첫날 '따상'","한국판 뉴딜 발표, 2차전지·수소차 테마 들썩","현대차 수소·전기차 기대감에 급등","커뮤|카카오 8만원 돌파, 아직 안 늦었다","커뮤|에코프로비엠 이거 뭐하는 회사임?"],
  ["광복절 이후 코로나 재확산, 거리두기 2.5단계","카카오 시가총액 상위권 질주","개인 신용융자 잔고 사상 최대","커뮤|빚투 안 하면 바보 되는 장","지라시|카카오게임즈 청약 경쟁률 1,500대1 예상"],
  ["카카오게임즈 '따상', 청약 증거금 58조","미 나스닥 기술주 급락, 테슬라 하루 -21%","빅히트 공모가 13만5천원 확정","커뮤|빅히트 따상 가면 35만원, 무조건 청약","커뮤|성장주 끝물 아니냐는 얘기 슬슬 나옴"],
- ["빅히트 상장 후 연일 급락","이건희 삼성전자 회장 별세","미 대선 앞두고 관망세, 코스피 2,260대","커뮤|빅히트 상투 잡았다 한강 간다","지라시|삼성 상속세 때문에 배당 늘린다"],
+ ["빅히트 상장 후 연일 급락","이건희 삼성전자 회장 별세","미 대선 앞두고 관망세, 코스피 2,260대","커뮤|빅히트 상투 잡았다 이번 달은 라면만 먹는다","지라시|삼성 상속세 때문에 배당 늘린다"],
  ["화이자 백신 예방효과 90% 발표","미 대선 결과 확정, 외국인 대거 귀환","코스피 2,591 마감, 사상 최고치 근접","커뮤|백신 나오면 HMM 같은 경기민감주 간다","커뮤|삼전 7만 뚫었다 10만 간다"],
  ["코스피 2,873 사상 최고 마감","삼성전자 '8만전자' 등극","비트코인 3천만원 돌파, 2017년 고점 넘어","커뮤|삼전은 10만 간다 단톡방 도배","지라시|내년 상반기 코스피 3,500 증권사 전망"],
  ["코스피 3,000 첫 돌파","삼성전자 장중 9만6천원","현대차 '애플카' 협력설에 급등","커뮤|지금 안 사면 영원히 못 산다","커뮤|주식 안 하는 친구가 삼전 샀다길래 무서워짐"],
@@ -460,7 +460,7 @@ const CHIPS = [
 ];
 // rank: 숫자가 작을수록 대표 칭호 우선순위가 높다
 const TITLES = [
-  {id:"hangang", rank:1, kind:"공통", name:"한강 수온 체크러", roast:"시드 반토막. 한강 물 온도 앱을 켜본 적 있다.", cond:"수익률 -50% 이하", test:c => c.ret <= -0.5},
+  {id:"hangang", rank:1, kind:"공통", name:"계좌 장례식 상주", roast:"시드 반토막. 내 계좌 장례식에 상주로 섰다.", cond:"수익률 -50% 이하", test:c => c.ret <= -0.5},
   {id:"lastcall", rank:2, kind:"엔딩", name:"엔딩 직격탄", roast:"마지막 달에 풀매수했는데 거기서 장이 끝났다.", cond:"마지막 달 계좌가 -10% 이상 빠짐", test:c => c.lastMonth <= -0.1},
   {id:"kko_top", rank:3, kind:"카카오", name:"카카오 순장조", roast:"국민주라길래 샀다. 카톡은 매일 쓰는데 계좌는 매일 운다.", cond:"카카오를 14만원 이상에 매수, 또는 끝까지 들고 -30% 이하", test:c => c.buys("kko").some(t => t.p >= 140000) || c.endRet("kko") <= -0.3},
   {id:"sam_top", rank:4, kind:"삼성전자", name:"9만전자 상투 장인", roast:"'삼전은 10만 간다' 단톡방을 믿었다. 아직 기다리는 중.", cond:"삼성전자를 8만원 이상에 매수하고 손절했거나 끝에 손실", test:c => c.buys("sam").some(t => t.p >= 80000) && (c.endRet("sam") < 0 || c.soldLoss("sam"))},
@@ -582,14 +582,27 @@ async function drawCard(r){
   while (wrapLines(ctx, r.main, inner).length > 2 && ts > 84) { ts -= 8; ctx.font = `400 ${ts}px ${BH}`; }
   const tl = wrapLines(ctx, r.main, inner);
   if (tl.length === 1 && ctx.measureText(tl[0]).width > inner) { while (ctx.measureText(tl[0]).width > inner && ts > 60) { ts -= 6; ctx.font = `400 ${ts}px ${BH}`; } }
-  const tTop = tl.length === 1 ? by + 345 : by + 250;
+  const hasB = r.badges.length > 0;
+  const tTop = tl.length === 1 ? by + (hasB ? 320 : 345) : by + (hasB ? 238 : 250);
   ctx.fillStyle = "#ffffff";
   tl.forEach((l, k) => ctx.fillText(l, cx, tTop + k*ts*1.06));
+  // 보너스 뱃지: 칭호 바로 아래 회색 태그
+  if (hasB) {
+    const bs = r.badges.slice(0, 3), fs = 26, ph = fs*1.7, gap = 10;
+    ctx.font = `700 24px ${SANS}`; const lab = "보너스 뱃지", labW = ctx.measureText(lab).width;
+    ctx.font = `600 ${fs}px ${SANS}`; const ws = bs.map(b => ctx.measureText(b).width + fs*1.2);
+    const total = labW + 16 + ws.reduce((a, b) => a + b, 0) + gap*(bs.length - 1);
+    let x = cx - total/2; const rowY = tTop + (tl.length - 1)*ts*1.06 + 44;
+    ctx.textAlign = "left"; ctx.fillStyle = "#98a1b5"; ctx.font = `700 24px ${SANS}`; ctx.textBaseline = "middle"; ctx.fillText(lab, x, rowY + ph/2 + 1); ctx.textBaseline = "alphabetic";
+    x += labW + 16;
+    bs.forEach((b, k) => { pill(ctx, x, rowY, b, fs, "#dfe3ee", "#5a6382"); x += ws[k] + gap; });
+    ctx.textAlign = "center";
+  }
   // 구분선 + 수익률
-  const ly = by + bh - 215;
+  const ly = by + bh - 195;
   ctx.fillStyle = "rgba(255,204,26,.35)"; ctx.fillRect(bx + 120, ly, bw - 240, 2);
   ctx.fillStyle = "#c6cbd8"; ctx.font = `700 30px ${SANS}`; ctx.fillText("수익률", cx, ly + 60);
-  ctx.fillStyle = r.ret >= 0 ? UP : DOWN; ctx.font = `600 116px ${MONO}`; ctx.fillText(pct(r.ret), cx, ly + 175);
+  ctx.fillStyle = r.ret >= 0 ? UP : DOWN; ctx.font = `600 116px ${MONO}`; ctx.fillText(pct(r.ret), cx, ly + 168);
   // 칭호 설명 (박스 밖, 따옴표)
   ctx.fillStyle = "#c6cbd8"; ctx.font = `400 32px ${SANS}`;
   const rl = wrapLines(ctx, `“${r.roast}”`, W - P*2).slice(0, 2);
@@ -603,7 +616,6 @@ async function drawCard(r){
     ctx.fillStyle = "#98a1b5"; ctx.font = `400 26px ${SANS}`; ctx.fillText(k + " ", x, yy); x += ctx.measureText(k + " ").width;
     ctx.fillStyle = v >= 0 ? UP : DOWN; ctx.font = `600 26px ${MONO}`; ctx.fillText(pct(v), x, yy); x += ctx.measureText(pct(v)).width + 34;
   }
-  if (r.badges.length) { yy += 44; ctx.fillStyle = "#98a1b5"; ctx.font = `400 24px ${SANS}`; ctx.fillText("보너스 뱃지  " + r.badges.slice(0, 4).join(" · "), P, yy); }
   yy = H - 88;
   ctx.fillStyle = GOLD; ctx.font = `600 30px ${MONO}`; ctx.fillText(GAME_URL.replace("https://","").replace(/\/$/,""), P, yy);
   ctx.textAlign = "right"; ctx.fillStyle = "#ffffff"; ctx.font = `700 30px ${SANS}`; ctx.fillText(`made by ${MAKER}`, W - P, yy);
