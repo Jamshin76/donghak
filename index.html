@@ -521,9 +521,10 @@ function titles(){
   const main = combo ? {name:combo.name, roast:combo.roast} : got[0];
   const used = combo ? combo.need : [got[0].id];
   const badges = got.filter(t => !used.includes(t.id)).map(t => t.name);
-  const tier = TIERS.find(t => c.ret <= t.max).name;
+  const tierIdx = TIERS.findIndex(t => c.ret <= t.max), tier = TIERS[tierIdx].name;
+  const key = `${tierIdx}-${combo ? "c" + COMBOS.indexOf(combo) : got[0].id}`;
   const chip = CHIPS.find(k => fin >= k.min);
-  return {ret:c.ret, fin, E, tier, main:main.name, roast:main.roast, full:`${tier} ${main.name}`, badges, chip: chip ? chip.name : ""};
+  return {ret:c.ret, fin, E, tier, key, main:main.name, roast:main.roast, full:`${tier} ${main.name}`, badges, chip: chip ? chip.name : ""};
 }
 
 // ===== 결과 카드 (캔버스로 그려서 화면 표시 = 저장 이미지) =====
@@ -635,16 +636,18 @@ async function finish(){
     ["코스피 지수", KOSPI[E]/KOSPI[0]-1],
     ...ASSETS.map(a => ["최고의 한 종목: " + a.name, a.p[E]/a.p[0]-1]).sort((x,y) => y[1]-x[1]).slice(0,1),
   ];
-  const text = `나는 [${full}]${chip ? " · " + chip : ""}\n${r.ending} · 수익률 ${pct(ret)}\n${roast}\n\n동학개미 시뮬레이터 made by ${MAKER}(${HANDLE}) #동학개미시뮬레이터\n${GAME_URL}`;
+  // 내 결과 링크: 칭호별 미리 만든 이미지가 링크 미리보기로 뜨고, 누르면 내 결과 → 나도 해보기 (r/ 폴더)
+  const shareURL = `${GAME_URL}r/${r.key}.html?p=${(ret*100).toFixed(1)}&e=${label(E)}`;
+  const text = `나는 [${full}]${chip ? " · " + chip : ""}\n${r.ending} · 수익률 ${pct(ret)}\n${roast}\n\n동학개미 시뮬레이터 made by ${MAKER}(${HANDLE}) #동학개미시뮬레이터\n${shareURL}`;
   const intent = "https://x.com/intent/tweet?text=" + encodeURIComponent(text);
   $("end").innerHTML = `
     <a class="cardlink" href="${PROFILE}" target="_blank" rel="noopener" title="${MAKER} X 홈"><img class="cardimg" id="cardImg" alt="결과 카드: ${full}, 수익률 ${pct(ret)}"></a>
     <a class="shareMain" id="postX" href="${intent}" target="_blank" rel="noopener">𝕏 X에 결과 올리기</a>
     <div class="steps">
-      <button class="save" id="saveCard">🖼 카드 복사</button>
+      <button class="save" id="saveCard">💾 카드 저장</button>
       <button class="copy" id="copyLink">📋 글+링크 복사</button>
     </div>
-    <div class="note" id="endNote">X에 올리기를 누르면 글이 채워진 X 글쓰기 창이 열리고 카드는 복사돼 있어. 붙여넣기만 하면 끝. 카톡·커뮤엔 카드 복사, 글+링크 복사 해서 각각 붙여넣으면 돼.</div>
+    <div class="note" id="endNote">올리는 링크엔 내 칭호 이미지가 미리보기로 붙어서 글만 올려도 돼. 카톡·커뮤엔 글+링크 복사해서 붙여넣으면 끝. 상세 카드는 저장해서 따로 올려도 좋아.</div>
     <div class="share">
       <a class="follow" href="https://x.com/intent/follow?screen_name=${HANDLE.slice(1)}" target="_blank" rel="noopener">다음 시즌 알림 받기 · ${MAKER} 팔로우</a>
     </div>
@@ -663,40 +666,22 @@ async function finish(){
   const cardFile = async () => new File([await new Promise(res => cv.toBlob(res, "image/png"))], name, {type:"image/png"});
   const download = () => { const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); };
   // 링크는 게임 주소로 바로. 아돈노미 X는 카드·사이트 곳곳의 크레딧으로 연결된다.
-  const dare = `나 동학개미 시뮬레이터에서 [${full}] 받음. 수익률 ${pct(ret)} ㅋㅋ\n2020년 코로나 폭락장부터 1,000만원 굴려보기. 너는 몇 등급 나오냐?\n👉 ${GAME_URL}`;
+  const dare = `나 동학개미 시뮬레이터에서 [${full}] 받음. 수익률 ${pct(ret)} ㅋㅋ\n2020년 코로나 폭락장부터 1,000만원 굴려보기. 너는 몇 등급 나오냐?\n👉 ${shareURL}`;
   const copyText = t => (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).catch(() => {
     const ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();
     const ok = document.execCommand && document.execCommand("copy"); ta.remove(); if (!ok) throw 0;
   });
-  // X에 결과 올리기(폰)
-  // 안드로이드: 공유창은 기종마다 X 게시/Chat이 제멋대로 떠서 쓰지 않는다. 카드를 갤러리에 저장하고, 글이 채워진 X 앱 글쓰기 창을 연다.
-  // 아이폰: 공유창의 X는 게시로 바로 가므로 카드+글을 공유창으로 넘긴다(공유는 탭 직후에 불려야 해서 파일을 미리 만든다).
-  let readyFile = null; cardFile().then(f => { readyFile = f; });
-  // 카드를 클립보드에 이미지로 복사(붙여넣기용). 안 되는 브라우저면 실패로 돌려서 저장으로 넘어간다.
-  const pngBlob = new Promise(res => cv.toBlob(res, "image/png"));
-  const copyImage = () => (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem)
-    ? navigator.clipboard.write([new ClipboardItem({"image/png": pngBlob})]) : Promise.reject();
-  $("postX").addEventListener("click", ev => {
-    if (IS_AND) {
-      ev.preventDefault(); ev.stopPropagation();
-      copyImage().then(() => toastEnd("카드를 복사해뒀어. X 글쓰기 창에서 길게 눌러 붙여넣기 하면 카드가 들어가."),
-        () => { download(); toastEnd("카드를 갤러리에 저장했어. X 글쓰기 창에서 사진 버튼 눌러 방금 저장한 카드를 붙여줘."); })
-        .then(() => setTimeout(() => { location.href = xAndroidUrl(intent); }, 400));
-      return;
-    }
-    if (!IS_IOS || !readyFile || !(navigator.canShare && navigator.canShare({files:[readyFile]}))) return;
-    ev.preventDefault(); ev.stopPropagation();
-    navigator.share({files:[readyFile], text}).then(() => toastEnd("올렸으면 끝! 친구들 칭호도 구경해봐."), e => {
-      if (e && e.name === "AbortError") return;
-      toastEnd("공유창이 안 열렸어. 카드를 저장하고 X 글쓰기에 붙여줘."); });
-    toastEnd("공유창에서 X를 골라줘. 카드랑 글이 같이 들어가.");
-  });
-  $("saveCard").addEventListener("click", () => {
-    copyImage().then(() => toastEnd("카드 복사 완료! 카톡·X 입력창을 길게 눌러 붙여넣기 하면 돼."),
-      () => { download(); toastEnd("이 브라우저는 이미지 복사가 안 돼서 저장했어. 카드를 길게 눌러 저장해도 돼."); });
+  // X에 결과 올리기: 전역 X 링크 처리(폰은 X 앱 글쓰기)로 글+내 결과 링크만 넘긴다. 링크 미리보기에 칭호 이미지가 붙는다.
+  $("saveCard").addEventListener("click", async () => {
+    try {
+      const file = await cardFile();
+      if (navigator.canShare && navigator.canShare({files:[file]}) && (IS_AND || IS_IOS)) { await navigator.share({files:[file]}); return; }
+    } catch(e){ if (e && e.name === "AbortError") return; }
+    download();
+    toastEnd("저장했어. 안 보이면 카드를 길게 눌러 저장해줘.");
   });
   $("copyLink").addEventListener("click", () => {
-    copyText(dare).then(() => toastEnd("복사 완료! 카톡·커뮤에 붙여넣고, 카드 사진도 같이 보내면 더 좋아."), () => toastEnd("복사가 막혔어. 주소는 " + GAME_URL));
+    copyText(dare).then(() => toastEnd("복사 완료! 붙여넣으면 링크 미리보기에 내 칭호 이미지가 같이 떠."), () => toastEnd("복사가 막혔어. 주소는 " + GAME_URL));
   });
 }
 // ===== 폰에서는 X 링크를 X 앱으로 연다 (이미 로그인된 앱을 쓰게) =====
