@@ -644,7 +644,7 @@ async function finish(){
       <button class="save" id="saveCard">💾 카드 저장</button>
       <button class="copy" id="copyLink">🔗 링크 복사</button>
     </div>
-    <div class="note" id="endNote">폰에서는 X에 올리기 → 공유창에서 X를 고르면 카드랑 글이 같이 들어가. 카톡·커뮤엔 링크 복사해서 카드 사진이랑 같이 붙여줘.</div>
+    <div class="note" id="endNote">X에 올리기를 누르면 글이 채워진 X 글쓰기 창이 열려. 카드 사진만 붙이면 끝. 카톡·커뮤엔 링크 복사해서 카드 사진이랑 같이 붙여줘.</div>
     <div class="share">
       <a class="follow" href="https://x.com/intent/follow?screen_name=${HANDLE.slice(1)}" target="_blank" rel="noopener">다음 시즌 알림 받기 · ${MAKER} 팔로우</a>
     </div>
@@ -668,11 +668,19 @@ async function finish(){
     const ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();
     const ok = document.execCommand && document.execCommand("copy"); ta.remove(); if (!ok) throw 0;
   });
-  // X에 결과 올리기(폰): 카드 사진 + 글을 공유창으로 넘긴다. 공유창에서 X를 고르면 사진·글이 채워진 글쓰기 창이 뜬다.
-  // 공유는 탭 직후에 불려야 해서(아이폰) 카드 파일을 미리 만들어 둔다.
+  // X에 결과 올리기(폰)
+  // 안드로이드: 공유창은 기종마다 X 게시/Chat이 제멋대로 떠서 쓰지 않는다. 카드를 갤러리에 저장하고, 글이 채워진 X 앱 글쓰기 창을 연다.
+  // 아이폰: 공유창의 X는 게시로 바로 가므로 카드+글을 공유창으로 넘긴다(공유는 탭 직후에 불려야 해서 파일을 미리 만든다).
   let readyFile = null; cardFile().then(f => { readyFile = f; });
   $("postX").addEventListener("click", ev => {
-    if (!(IS_AND || IS_IOS) || !readyFile || !(navigator.canShare && navigator.canShare({files:[readyFile]}))) return;
+    if (IS_AND) {
+      ev.preventDefault(); ev.stopPropagation();
+      download();
+      toastEnd("카드를 갤러리에 저장했어. X 글쓰기 창에서 사진 버튼 눌러 방금 저장한 카드만 붙이면 끝!");
+      setTimeout(() => { location.href = xAndroidUrl(intent); }, 700);
+      return;
+    }
+    if (!IS_IOS || !readyFile || !(navigator.canShare && navigator.canShare({files:[readyFile]}))) return;
     ev.preventDefault(); ev.stopPropagation();
     navigator.share({files:[readyFile], text}).then(() => toastEnd("올렸으면 끝! 친구들 칭호도 구경해봐."), e => {
       if (e && e.name === "AbortError") return;
@@ -692,9 +700,14 @@ async function finish(){
   });
 }
 // ===== 폰에서는 X 링크를 X 앱으로 연다 (이미 로그인된 앱을 쓰게) =====
-// 안드로이드: intent 로 앱을 열고, 앱이 없으면 브라우저 주소로 자동으로 넘어간다. 글쓰기는 X의 게시 화면(ComposerShareActivity)을 직접 지정해 Chat(DM)으로 새지 않게 한다.
+// 안드로이드: x.com 주소를 X 앱으로 열고, 앱이 없으면 브라우저 주소로 자동으로 넘어간다.
 // 아이폰: 글쓰기는 twitter:// 로 앱을 열고 안 열리면 웹으로, 프로필·팔로우는 같은 탭 x.com 주소(유니버설 링크)로 앱이 열린다.
 const IS_AND = /Android/i.test(navigator.userAgent), IS_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+// 안드로이드: x.com 주소를 X 앱이 직접 열게 한다(글쓰기 주소면 글이 채워진 게시 창). 앱이 없으면 브라우저로.
+function xAndroidUrl(href){
+  const u = new URL(href.replace("://twitter.com/", "://x.com/"));
+  return `intent://x.com${u.pathname}${u.search}#Intent;scheme=https;package=com.twitter.android;S.browser_fallback_url=${encodeURIComponent(u.href)};end`;
+}
 function xAppTarget(href){
   const u = new URL(href);
   if (/\/intent\/(tweet|post)/.test(u.pathname)) return {path:"post?message=" + encodeURIComponent(u.searchParams.get("text") || ""), post:true};
@@ -705,13 +718,7 @@ document.addEventListener("click", ev => {
   const a = ev.target.closest && ev.target.closest('a[href^="https://x.com/"],a[href^="https://twitter.com/"]');
   if (!a || !(IS_AND || IS_IOS)) return;
   const t = xAppTarget(a.href);
-  if (IS_AND) {
-    ev.preventDefault();
-    location.href = t.post
-      ? `intent:#Intent;action=android.intent.action.SEND;type=text/plain;S.android.intent.extra.TEXT=${encodeURIComponent(new URL(a.href).searchParams.get("text") || "")};component=com.twitter.android/com.twitter.composer.ComposerShareActivity;S.browser_fallback_url=${encodeURIComponent(a.href)};end`
-      : `intent://${t.path}#Intent;scheme=twitter;package=com.twitter.android;S.browser_fallback_url=${encodeURIComponent(t.web)};end`;
-    return;
-  }
+  if (IS_AND) { ev.preventDefault(); location.href = xAndroidUrl(t.post ? a.href : t.web); return; }
   ev.preventDefault();
   if (!t.post) { location.href = t.web; return; }
   let left = false; const gone = () => { left = true; };
