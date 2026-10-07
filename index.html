@@ -636,7 +636,7 @@ async function finish(){
     ...ASSETS.map(a => ["최고의 한 종목: " + a.name, a.p[E]/a.p[0]-1]).sort((x,y) => y[1]-x[1]).slice(0,1),
   ];
   const text = `나는 [${full}]${chip ? " · " + chip : ""}\n${r.ending} · 수익률 ${pct(ret)}\n${roast}\n\n동학개미 시뮬레이터 made by ${MAKER}(${HANDLE}) #동학개미시뮬레이터\n${GAME_URL}`;
-  const intent = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
+  const intent = "https://x.com/intent/tweet?text=" + encodeURIComponent(text);
   $("end").innerHTML = `
     <a class="cardlink" href="${PROFILE}" target="_blank" rel="noopener" title="${MAKER} X 홈"><img class="cardimg" id="cardImg" alt="결과 카드: ${full}, 수익률 ${pct(ret)}"></a>
     <a class="shareMain" id="postX" href="${intent}" target="_blank" rel="noopener">𝕏 X에 결과 올리기</a>
@@ -668,16 +668,6 @@ async function finish(){
     const ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();
     const ok = document.execCommand && document.execCommand("copy"); ta.remove(); if (!ok) throw 0;
   });
-  // 폰에서는 X 앱 글쓰기 창으로 먼저 연다. 앱이 없으면 웹 X로 넘어간다.
-  $("postX").addEventListener("click", ev => {
-    if (!/Android|iPhone|iPad/i.test(navigator.userAgent)) return;
-    ev.preventDefault();
-    let left = false; const onHide = () => { if (document.hidden) left = true; };
-    document.addEventListener("visibilitychange", onHide);
-    location.href = "twitter://post?message=" + encodeURIComponent(text);
-    setTimeout(() => { document.removeEventListener("visibilitychange", onHide); if (!left && !document.hidden) location.href = intent; }, 1500);
-    toastEnd("X 앱 글쓰기 창에서 저장한 카드를 사진으로 붙여줘.");
-  });
   $("saveCard").addEventListener("click", async () => {
     try {
       const file = await cardFile();
@@ -690,6 +680,33 @@ async function finish(){
     copyText(dare).then(() => toastEnd("복사 완료! 단톡방이나 커뮤에 붙여넣으면 링크 미리보기가 같이 떠."), () => toastEnd("복사가 막혔어. 주소는 " + GAME_URL));
   });
 }
+// ===== 폰에서는 X 링크를 X 앱으로 연다 (이미 로그인된 앱을 쓰게) =====
+// 안드로이드: intent:// 로 앱을 열고, 앱이 없으면 브라우저 주소로 자동으로 넘어간다.
+// 아이폰: 글쓰기는 twitter:// 로 앱을 열고 안 열리면 웹으로, 프로필·팔로우는 같은 탭 x.com 주소(유니버설 링크)로 앱이 열린다.
+const IS_AND = /Android/i.test(navigator.userAgent), IS_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+function xAppTarget(href){
+  const u = new URL(href);
+  if (/\/intent\/(tweet|post)/.test(u.pathname)) return {path:"post?message=" + encodeURIComponent(u.searchParams.get("text") || ""), post:true};
+  const name = u.searchParams.get("screen_name") || u.pathname.split("/").filter(Boolean)[0];
+  return {path:"user?screen_name=" + encodeURIComponent(name), web:"https://x.com/" + name};
+}
+document.addEventListener("click", ev => {
+  const a = ev.target.closest && ev.target.closest('a[href^="https://x.com/"],a[href^="https://twitter.com/"]');
+  if (!a || !(IS_AND || IS_IOS)) return;
+  const t = xAppTarget(a.href);
+  if (IS_AND) {
+    ev.preventDefault();
+    location.href = `intent://${t.path}#Intent;scheme=twitter;package=com.twitter.android;S.browser_fallback_url=${encodeURIComponent(t.post ? a.href : t.web)};end`;
+    return;
+  }
+  ev.preventDefault();
+  if (!t.post) { location.href = t.web; return; }
+  let left = false; const gone = () => { left = true; };
+  addEventListener("pagehide", gone, {once:true}); addEventListener("blur", gone, {once:true});
+  document.addEventListener("visibilitychange", () => { if (document.hidden) left = true; }, {once:true});
+  location.href = "twitter://" + t.path;
+  setTimeout(() => { if (!left && !document.hidden) location.href = a.href; }, 2500);
+});
 function toastEnd(m){ const n = $("endNote"); if (n) n.textContent = m; }
 
 function save(){ try { localStorage.setItem("dongak-s2", JSON.stringify(S)); } catch(e){} }
