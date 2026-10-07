@@ -62,6 +62,14 @@ h1 em{font-style:normal;color:var(--up)}
 .tape span{font-size:15px;font-weight:600}
 .tape div.hot{background:var(--upbg)} .tape div.cold{background:var(--downbg)}
 @media (max-width:560px){.tape{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.nwrap{display:grid;grid-template-columns:minmax(0,1fr) 168px;gap:10px;align-items:stretch}
+.macro{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 12px;display:flex;flex-direction:column;gap:10px}
+.macro .tag{font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:700}
+.macro .m b{display:block;font-size:12px;font-weight:500;color:var(--muted);white-space:nowrap}
+.macro .m span{font-size:16px;font-weight:600}
+.macro .m small{display:block;font-size:12px;font-weight:600;margin-top:1px}
+.macro .src{font-size:10px;color:var(--muted);margin-top:auto}
+@media (max-width:600px){.nwrap{grid-template-columns:1fr}.macro{order:-1;flex-direction:row;padding:8px 10px;gap:8px}.macro .tag,.macro .src{display:none}.macro .m{flex:1;min-width:0}.macro .m b{font-size:11px;overflow:hidden;text-overflow:ellipsis}.macro .m span{font-size:15px}}
 .news{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
 .news .tag{font-size:11px;letter-spacing:.12em;color:var(--up);font-weight:700}
 .nlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
@@ -177,7 +185,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
 
   <div id="play">
     <div style="display:flex;flex-direction:column;gap:14px">
-      <article class="news" id="news"></article>
+      <div class="nwrap"><article class="news" id="news"></article><aside class="macro" id="macro" aria-label="시장 지표"></aside></div>
       <div class="feel" id="feel"></div>
       <section class="acct">
         <div><label>총 평가금액</label><div class="big num" id="total"></div><div class="num" id="totalRet"></div></div>
@@ -214,6 +222,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
         <li>2020년 2월 <b>코로나 폭락장</b>부터 시드 <b>1,000만원</b>으로 한 달씩 투자해 봐요.</li>
         <li>사고파는 가격은 그 달 <b>실제 월말 종가</b>예요.</li>
         <li>결과를 기억해서 하기보다, 매달 나오는 <b>헤드라인 5개</b>를 보고 판단해 보세요. 뉴스 3개에 커뮤·지라시 2개인데, 지라시는 믿을지 말지 알아서!</li>
+        <li>옆(폰은 위)에 <b>환율·한국 금리·미국 금리</b>도 있어요. 환율은 돈이 들어오나 나가나, 금리는 시장이 과열됐나 볼 때 대강 참고!</li>
       </ul>
       <div class="tnav"><span class="dots"><i class="on"></i><i></i></span><button class="go" id="tutNext">다음 ▶</button></div>
     </div>
@@ -245,6 +254,12 @@ const ASSETS = [
   {id:"hyd", name:"현대차", tag:"자동차", p:[115000,88700,93600,98000,97700,126500,176500,178500,164500,181500,192000, 229000,237000,218000,212000,235000,239500,218000,212500,200000,208000,195500,209000, 186500,174000,180500,186000,189500,180500,196000,196000,176500,164500,169000,151000, 170000,176300,184500,197500,200000,206500,196000,189100,191100,169700,184300,203500, 194600,250500,233000,251000,253000,295000,249000,255500,244000,215000,218500,212000, 206000,193000,197200,190600,185300,203500,213000,220000,215000,290000,261500,296500]},
   {id:"inv", name:"KODEX 인버스", tag:"하락 베팅", p:[6930,7500,6790,6510,6160,5740,5565,5485,5630,4875,4255, 4070,3995,3925,3855,3790,3680,3805,3835,4000,4125,4275,4005, 4385,4335,4265,4395,4395,5025,4770,4790,5445,5110,4780,5195, 4780,4825,4715,4680,4505,4515,4455,4595,4705,5040,4550,4255, 4570,4325,4090,4195,4285,4015,4065,4220,4415,4505,4705,4795, 4605,4565,4555,4450,4190,3620,3430,3490,3160,2570,2670,2430]},
   {id:"btc", name:"비트코인", tag:"코인", frac:true, p:[10374000,7799000,10477000,11432000,10903000,13416000,13739000,12558000,15606000,21315000,32042000, 36408000,51798000,71513000,67939000,43761000,40674000,47979000,55230000,53523000,72391000,70702000,56784000, 47266000,52332000,55352000,49283000,39923000,26003000,30751000,27530000,27924000,28778000,23192000,21079000, 29064000,31024000,37540000,39149000,36391000,40547000,37929000,35502000,36600000,47030000,50586000,57047000, 58738000,85910000,100970000,87137000,94505000,87920000,90345000,80262000,83730000,98112000,133701000,139257000, 156580000,124499000,123209000,136050000,147932000,145759000,161398000,150700000,162828000,164275000,135744000,128067000]},
+];
+// 시장 지표 (FRED 월평균, 2020.01부터 72개 — 인덱스 i+1이 게임의 i번째 달). 대강 감안하라는 용도.
+const MACRO = [
+  {name:"원/달러 환율", v:[1167,1195,1218,1223,1228,1207,1199,1187,1177,1144,1116,1094,1098,1112,1130,1118,1124,1123,1146,1161,1173,1182,1184,1184,1196,1199,1221,1235,1269,1277,1308,1319,1396,1426,1362,1294,1243,1275,1306,1322,1327,1297,1282,1322,1334,1352,1308,1304,1326,1331,1332,1368,1365,1379,1382,1351,1331,1362,1395,1440,1452,1445,1458,1440,1391,1365,1379,1389,1393,1423,1460,1465], unit:"원", d:0},
+  {name:"한국 국채 10년", v:[1.66,1.54,1.49,1.50,1.39,1.39,1.36,1.37,1.50,1.51,1.61,1.68,1.73,1.84,2.04,2.04,2.13,2.10,1.98,1.91,2.06,2.40,2.35,2.19,2.49,2.69,2.78,3.22,3.29,3.64,3.30,3.32,3.90,4.27,3.92,3.54,3.41,3.45,3.45,3.32,3.40,3.61,3.68,3.86,3.95,4.27,3.89,3.42,3.35,3.43,3.39,3.57,3.53,3.34,3.17,3.00,3.01,3.07,3.01,2.77,2.82,2.83,2.79,2.66,2.71,2.84,2.84,2.81,2.85,2.93,3.25,3.37], unit:"%", d:2},
+  {name:"미국 국채 10년", v:[1.76,1.50,0.87,0.66,0.67,0.73,0.62,0.65,0.68,0.79,0.87,0.93,1.08,1.26,1.61,1.64,1.62,1.52,1.32,1.28,1.37,1.58,1.56,1.47,1.76,1.93,2.13,2.75,2.90,3.14,2.90,2.90,3.52,3.98,3.89,3.62,3.53,3.75,3.66,3.46,3.57,3.75,3.90,4.17,4.38,4.80,4.50,4.02,4.06,4.21,4.21,4.54,4.48,4.31,4.25,3.87,3.72,4.10,4.36,4.39,4.63,4.45,4.28,4.28,4.42,4.38,4.39,4.26,4.12,4.06,4.09,4.14], unit:"%", d:2},
 ];
 const KOSPI = [1987.01,1754.64,1947.56,2029.60,2108.33,2249.37,2326.17,2327.89,2267.15,2591.34,2873.47, 2976.21,3012.95,3061.42,3147.86,3203.92,3296.68,3202.32,3199.27,3068.82,2970.68,2839.01,2977.65, 2663.34,2699.18,2757.65,2695.05,2685.90,2332.64,2451.50,2472.05,2155.49,2293.61,2472.53,2236.40, 2425.08,2412.85,2476.86,2501.53,2577.12,2564.28,2632.58,2556.27,2465.07,2277.99,2535.29,2655.28, 2497.09,2642.36,2746.63,2692.06,2636.52,2797.82,2770.69,2674.31,2593.27,2556.15,2455.91,2399.49, 2517.37,2532.78,2481.12,2556.61,2697.67,3071.70,3245.44,3186.01,3424.60,4107.50,3926.59,4214.17];
 // 각 달: 뉴스 3줄 + 커뮤/지라시 2줄. 커뮤·지라시는 그 시절 분위기를 재현한 창작이다.
@@ -392,6 +407,11 @@ function render(animate){
     const [kind, body] = t.includes("|") ? t.split("|") : ["뉴스", t];
     return `<li class="${kind === "뉴스" ? "nw" : "ch"}"><span class="kd">${kind}</span><span>${body}</span></li>`;
   }).join("");
+  $("macro").innerHTML = `<span class="tag">시장 지표</span>` + MACRO.map(m => {
+    const v = m.v[i+1], dv = v - m.v[i], fmt = x => m.d ? x.toFixed(m.d) : won(Math.round(x));
+    const dtxt = Math.abs(dv) < (m.d ? 0.005 : 0.5) ? "– 그대로" : `${dv > 0 ? "▲" : "▼"} ${fmt(Math.abs(dv))}${m.d ? "%p" : "원"}`;
+    return `<div class="m"><b>${m.name}</b><span class="num">${fmt(v)}${m.unit}</span><small class="${cls(dv)}">${dtxt}</small></div>`;
+  }).join("") + `<span class="src">월평균 · 지난달 대비 · FRED</span>`;
   $("news").innerHTML = `<span class="tag">${label(i)} 이번 달 소식</span><ul class="nlist">${li}</ul>`;
   // feelings: FOMO / relief
   let feel = "";
@@ -653,7 +673,7 @@ async function finish(){
     <a class="maker" href="${PROFILE}" target="_blank" rel="noopener"><span>made by <b>${MAKER}</b> from X</span><span>${HANDLE} 홈 가기 →</span></a>
     <div class="note">같은 기간 다른 선택은 이랬어:</div>
     <div class="bench">${r.bm.map(b => `<div><span>${b[0]}</span><span class="num ${cls(b[1])}">${pct(b[1])}</span></div>`).join("")}<div><span>나</span><span class="num ${cls(ret)}">${pct(ret)}</span></div></div>
-    <div class="note">가격: 월말 종가(분할·무상증자 반영 수정주가), Yahoo Finance · 비트코인 업비트 원화 시세. 수수료·세금·배당 미반영. 커뮤·지라시 줄은 그 시절 분위기를 재현한 창작이다. 실제 과거 데이터로 만든 게임이며 투자 권유가 아니다.</div>`;
+    <div class="note">환율·금리: FRED 월평균(원/달러, 한국·미국 국채 10년). 가격: 월말 종가(분할·무상증자 반영 수정주가), Yahoo Finance · 비트코인 업비트 원화 시세. 수수료·세금·배당 미반영. 커뮤·지라시 줄은 그 시절 분위기를 재현한 창작이다. 실제 과거 데이터로 만든 게임이며 투자 권유가 아니다.</div>`;
   $("end").hidden = false; $("play").hidden = true; $("tape").hidden = true; $("help").hidden = true;
   $("next").textContent = "다시 하기 ↺"; $("skip").hidden = true;
   $("progT").textContent = `${label(E)} 장 마감`; $("fill").style.width = "100%";
