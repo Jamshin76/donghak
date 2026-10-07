@@ -644,7 +644,7 @@ async function finish(){
       <button class="save" id="saveCard">💾 카드 저장</button>
       <button class="copy" id="copyLink">🔗 링크 복사</button>
     </div>
-    <div class="note" id="endNote">카드를 저장해서 X 글쓰기 창에 사진으로 붙여줘. 카톡·커뮤엔 링크 복사해서 카드 사진이랑 같이 붙이면 돼.</div>
+    <div class="note" id="endNote">폰에서는 X에 올리기 → 공유창에서 X를 고르면 카드랑 글이 같이 들어가. 카톡·커뮤엔 링크 복사해서 카드 사진이랑 같이 붙여줘.</div>
     <div class="share">
       <a class="follow" href="https://x.com/intent/follow?screen_name=${HANDLE.slice(1)}" target="_blank" rel="noopener">다음 시즌 알림 받기 · ${MAKER} 팔로우</a>
     </div>
@@ -667,6 +667,17 @@ async function finish(){
   const copyText = t => (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).catch(() => {
     const ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();
     const ok = document.execCommand && document.execCommand("copy"); ta.remove(); if (!ok) throw 0;
+  });
+  // X에 결과 올리기(폰): 카드 사진 + 글을 공유창으로 넘긴다. 공유창에서 X를 고르면 사진·글이 채워진 글쓰기 창이 뜬다.
+  // 공유는 탭 직후에 불려야 해서(아이폰) 카드 파일을 미리 만들어 둔다.
+  let readyFile = null; cardFile().then(f => { readyFile = f; });
+  $("postX").addEventListener("click", ev => {
+    if (!(IS_AND || IS_IOS) || !readyFile || !(navigator.canShare && navigator.canShare({files:[readyFile]}))) return;
+    ev.preventDefault(); ev.stopPropagation();
+    navigator.share({files:[readyFile], text}).then(() => toastEnd("올렸으면 끝! 친구들 칭호도 구경해봐."), e => {
+      if (e && e.name === "AbortError") return;
+      toastEnd("공유창이 안 열렸어. 카드를 저장하고 X 글쓰기에 붙여줘."); });
+    toastEnd("공유창에서 X를 골라줘. 카드랑 글이 같이 들어가.");
   });
   $("saveCard").addEventListener("click", async () => {
     try {
@@ -696,7 +707,9 @@ document.addEventListener("click", ev => {
   const t = xAppTarget(a.href);
   if (IS_AND) {
     ev.preventDefault();
-    location.href = `intent://${t.path}#Intent;scheme=twitter;package=com.twitter.android;S.browser_fallback_url=${encodeURIComponent(t.post ? a.href : t.web)};end`;
+    location.href = t.post
+      ? `intent:#Intent;action=android.intent.action.SEND;type=text/plain;S.android.intent.extra.TEXT=${encodeURIComponent(new URL(a.href).searchParams.get("text") || "")};package=com.twitter.android;S.browser_fallback_url=${encodeURIComponent(a.href)};end`
+      : `intent://${t.path}#Intent;scheme=twitter;package=com.twitter.android;S.browser_fallback_url=${encodeURIComponent(t.web)};end`;
     return;
   }
   ev.preventDefault();
