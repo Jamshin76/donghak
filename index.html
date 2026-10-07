@@ -123,6 +123,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .pg{display:flex;flex-direction:column;gap:14px}
 .tmaker{font-size:12px;color:var(--muted);text-align:center;text-decoration:none}
 .tmaker b{color:var(--fg)}
+.cardlink{display:flex;justify-content:center}
 .cardimg{width:100%;max-width:540px;align-self:center;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.25);background:#0f121a;min-height:200px}
 .steps{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .steps .save,.steps .post{font-size:15px;font-weight:700;padding:14px 10px;border-radius:10px;text-align:center;text-decoration:none;min-height:50px}
@@ -545,58 +546,69 @@ function pill(ctx, x, y, text, size, fg, stroke){
 }
 async function drawCard(r){
   try { await Promise.all(['400 100px "Black Han Sans"','700 40px "IBM Plex Sans KR"','400 40px "IBM Plex Sans KR"','600 40px "IBM Plex Mono"'].map(f => document.fonts.load(f, "가A1"))); } catch(e){}
-  const W = 1080, P = 70, maxW = W - P*2;
+  // 1080x1400. X가 가운데를 잘라 보여줘도(16:9 띠 ≈ y 396~1004) 칭호 박스가 보이도록 박스를 정중앙에 둔다.
+  const W = 1080, H = 1400, P = 64;
   const BH = '"Black Han Sans","IBM Plex Sans KR",sans-serif', SANS = '"IBM Plex Sans KR",sans-serif', MONO = '"IBM Plex Mono",monospace';
-  const m = document.createElement("canvas").getContext("2d");
-  // 제목 크기: 2줄 안에 들어가게
-  let ts = 124; m.font = `400 ${ts}px ${BH}`;
-  while (wrapLines(m, r.main, maxW).length > 2 && ts > 84) { ts -= 8; m.font = `400 ${ts}px ${BH}`; }
-  const tLines = wrapLines(m, r.main, maxW);
-  m.font = `400 36px ${SANS}`; const rLines = wrapLines(m, r.roast, maxW).slice(0, 3);
-  const topH = 210 + tLines.length*ts*1.08 + 30 + rLines.length*50 + 200 + (r.badges.length ? 80 : 0);
-  const H = Math.round(topH + 400);
+  const GOLD = "#ffcc1a", UP = "#ff5468", DOWN = "#5b95ff";
   const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
   const ctx = cv.getContext("2d");
-  // 배경
   ctx.fillStyle = "#0f121a"; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = "#ffcc1a"; ctx.fillRect(0, 0, W, 16);
-  // 상단 메인
-  let y = 104;
-  ctx.fillStyle = "#ffcc1a"; ctx.font = `700 34px ${SANS}`; ctx.fillText(`${label(r.E)} 장 마감 · ${r.ending}`, P, y);
-  ctx.fillStyle = "#ff5468"; ctx.font = `700 26px ${SANS}`; ctx.textAlign = "right"; ctx.fillText("동학개미 시뮬레이터", W - P, y); ctx.textAlign = "left";
-  y += 82;
-  ctx.fillStyle = "#ffcc1a"; ctx.font = `700 50px ${SANS}`; ctx.fillText(r.tier, P, y);
-  if (r.chip) { const tw = ctx.measureText(r.tier).width; pill(ctx, P + tw + 20, y - 40, r.chip, 26, "#ffcc1a", "#ffcc1a"); }
-  y += 24;
-  ctx.fillStyle = "#ffffff"; ctx.font = `400 ${ts}px ${BH}`;
-  for (const l of tLines) { y += ts*1.04; ctx.fillText(l, P, y); }
-  y += 56;
-  ctx.fillStyle = "#c6cbd8"; ctx.font = `400 36px ${SANS}`;
-  for (const l of rLines) { ctx.fillText(l, P, y); y += 50; }
-  y += 140;
-  ctx.fillStyle = r.ret >= 0 ? "#ff5468" : "#5b95ff"; ctx.font = `600 150px ${MONO}`; ctx.fillText(pct(r.ret), P - 6, y);
-  y += 36;
-  if (r.badges.length) { let x = P; for (const b of r.badges.slice(0, 4)) { m.font = `600 26px ${SANS}`; const w = m.measureText(b).width + 32; if (x + w > W - P) break; x += pill(ctx, x, y, b, 26, "#dfe3ee", "#3a4260") + 12; } }
-  // 하단 정보 띠
-  const by = Math.round(topH);
-  ctx.fillStyle = "#1a1f2c"; ctx.fillRect(0, by, W, H - by);
-  ctx.fillStyle = "#2a3044"; ctx.fillRect(0, by, W, 2);
-  let yy = by + 70;
-  ctx.fillStyle = "#ffffff"; ctx.font = `700 34px ${SANS}`; ctx.fillText(`2020.02 → ${label(r.E)}  ·  1,000만 → ${won(r.fin)}원`, P, yy);
-  yy += 56; ctx.font = `400 28px ${SANS}`; let x = P;
-  for (const [k, v] of [["같은 기간 삼전 존버", r.bm[0][1]], ["코스피", r.bm[1][1]]]) {
-    ctx.fillStyle = "#98a1b5"; ctx.fillText(k + " ", x, yy); x += ctx.measureText(k + " ").width;
-    ctx.fillStyle = v >= 0 ? "#ff5468" : "#5b95ff"; ctx.font = `600 28px ${MONO}`; ctx.fillText(pct(v), x, yy); x += ctx.measureText(pct(v)).width + 36; ctx.font = `400 28px ${SANS}`;
-  }
-  yy += 44; ctx.fillStyle = "#2a3044"; ctx.fillRect(P, yy, maxW, 2);
-  yy += 78;
-  ctx.fillStyle = "#ffffff"; ctx.font = `400 46px ${BH}`; ctx.fillText("동학개미 시뮬레이터", P, yy);
-  ctx.textAlign = "right"; ctx.font = `700 32px ${SANS}`; ctx.fillText(`made by ${MAKER}`, W - P, yy - 6);
-  yy += 50;
-  ctx.textAlign = "left"; ctx.fillStyle = "#ffcc1a"; ctx.font = `600 28px ${MONO}`; ctx.fillText(GAME_URL.replace("https://","").replace(/\/$/,""), P, yy);
-  ctx.textAlign = "right"; ctx.fillStyle = "#98a1b5"; ctx.font = `400 28px ${SANS}`; ctx.fillText(`from X ${HANDLE}`, W - P, yy);
+  ctx.fillStyle = GOLD; ctx.fillRect(0, 0, W, 16);
+  // 머리: 게임 이름 + 엔딩
+  ctx.fillStyle = "#ffffff"; ctx.font = `400 50px ${BH}`; ctx.fillText("동학개미 시뮬레이터", P, 118);
+  ctx.textAlign = "right"; ctx.fillStyle = "#98a1b5"; ctx.font = `700 28px ${SANS}`; ctx.fillText(`2020.02 → ${label(r.E)}`, W - P, 112); ctx.textAlign = "left";
+  ctx.fillStyle = UP; ctx.font = `700 40px ${SANS}`; ctx.fillText(`🚨 ${label(r.E)} 장 마감 · ${r.ending}`, P, 196);
+  ctx.fillStyle = "#98a1b5"; ctx.font = `400 30px ${SANS}`; ctx.fillText(`시드 1,000만원 → ${won(r.fin)}원`, P, 252);
+
+  // 칭호 박스
+  const bx = 44, by = 330, bw = W - 88, bh = 690;
+  const g = ctx.createLinearGradient(bx, by, bx + bw, by + bh);
+  g.addColorStop(0, "#2a2310"); g.addColorStop(.5, "#15161c"); g.addColorStop(1, "#2a2310");
+  ctx.save(); ctx.shadowColor = "rgba(255,204,26,.55)"; ctx.shadowBlur = 40;
+  ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 28); ctx.fillStyle = g; ctx.fill(); ctx.restore();
+  const sg = ctx.createLinearGradient(bx, by, bx + bw, by + bh);
+  sg.addColorStop(0, "#fff1a8"); sg.addColorStop(.35, GOLD); sg.addColorStop(.65, "#c8960a"); sg.addColorStop(1, "#fff1a8");
+  ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 28); ctx.lineWidth = 7; ctx.strokeStyle = sg; ctx.stroke();
+  // 박스 라벨
+  ctx.font = `700 30px ${SANS}`; const lab = "🏆 내 칭호", lw = ctx.measureText(lab).width + 48;
+  ctx.beginPath(); ctx.roundRect(bx + 40, by - 26, lw, 52, 26); ctx.fillStyle = GOLD; ctx.fill();
+  ctx.fillStyle = "#1a1400"; ctx.textBaseline = "middle"; ctx.fillText(lab, bx + 64, by + 1); ctx.textBaseline = "alphabetic";
+  if (r.chip) { ctx.font = `700 28px ${SANS}`; const cw = ctx.measureText(r.chip).width + 40; ctx.beginPath(); ctx.roundRect(bx + bw - 40 - cw, by - 24, cw, 48, 24); ctx.fillStyle = "#1a1400"; ctx.fill(); ctx.strokeStyle = GOLD; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = GOLD; ctx.textBaseline = "middle"; ctx.fillText(r.chip, bx + bw - 20 - cw, by + 1); ctx.textBaseline = "alphabetic"; }
+  // 수식어 + 칭호 (가운데 정렬)
+  const cx = W/2, inner = bw - 100;
+  ctx.textAlign = "center";
+  ctx.fillStyle = GOLD; ctx.font = `700 54px ${SANS}`; ctx.fillText(r.tier, cx, by + 120);
+  let ts = 132; ctx.font = `400 ${ts}px ${BH}`;
+  while (wrapLines(ctx, r.main, inner).length > 2 && ts > 84) { ts -= 8; ctx.font = `400 ${ts}px ${BH}`; }
+  const tl = wrapLines(ctx, r.main, inner);
+  if (tl.length === 1 && ctx.measureText(tl[0]).width > inner) { while (ctx.measureText(tl[0]).width > inner && ts > 60) { ts -= 6; ctx.font = `400 ${ts}px ${BH}`; } }
+  const tTop = tl.length === 1 ? by + 345 : by + 250;
+  ctx.fillStyle = "#ffffff";
+  tl.forEach((l, k) => ctx.fillText(l, cx, tTop + k*ts*1.06));
+  // 구분선 + 수익률
+  const ly = by + bh - 215;
+  ctx.fillStyle = "rgba(255,204,26,.35)"; ctx.fillRect(bx + 120, ly, bw - 240, 2);
+  ctx.fillStyle = "#c6cbd8"; ctx.font = `700 30px ${SANS}`; ctx.fillText("수익률", cx, ly + 60);
+  ctx.fillStyle = r.ret >= 0 ? UP : DOWN; ctx.font = `600 116px ${MONO}`; ctx.fillText(pct(r.ret), cx, ly + 175);
+  // 칭호 설명 (박스 밖, 따옴표)
+  ctx.fillStyle = "#c6cbd8"; ctx.font = `400 32px ${SANS}`;
+  const rl = wrapLines(ctx, `“${r.roast}”`, W - P*2).slice(0, 2);
+  rl.forEach((l, k) => ctx.fillText(l, cx, by + bh + 74 + k*44));
   ctx.textAlign = "left";
-  yy += 52; ctx.fillStyle = "#6b7389"; ctx.font = `400 22px ${SANS}`; ctx.fillText("실제 과거 월말 종가로 만든 게임 · 투자 권유 아님", P, yy);
+  // 하단 띠
+  const sy = 1160;
+  ctx.fillStyle = "#1a1f2c"; ctx.fillRect(0, sy, W, H - sy); ctx.fillStyle = "#2a3044"; ctx.fillRect(0, sy, W, 2);
+  let yy = sy + 56, x = P; ctx.font = `400 26px ${SANS}`;
+  for (const [k, v] of [["같은 기간 삼전 존버", r.bm[0][1]], ["코스피", r.bm[1][1]]]) {
+    ctx.fillStyle = "#98a1b5"; ctx.font = `400 26px ${SANS}`; ctx.fillText(k + " ", x, yy); x += ctx.measureText(k + " ").width;
+    ctx.fillStyle = v >= 0 ? UP : DOWN; ctx.font = `600 26px ${MONO}`; ctx.fillText(pct(v), x, yy); x += ctx.measureText(pct(v)).width + 34;
+  }
+  if (r.badges.length) { yy += 44; ctx.fillStyle = "#98a1b5"; ctx.font = `400 24px ${SANS}`; ctx.fillText("보너스 뱃지  " + r.badges.slice(0, 4).join(" · "), P, yy); }
+  yy = H - 88;
+  ctx.fillStyle = GOLD; ctx.font = `600 30px ${MONO}`; ctx.fillText(GAME_URL.replace("https://","").replace(/\/$/,""), P, yy);
+  ctx.textAlign = "right"; ctx.fillStyle = "#ffffff"; ctx.font = `700 30px ${SANS}`; ctx.fillText(`made by ${MAKER}`, W - P, yy);
+  ctx.fillStyle = "#98a1b5"; ctx.font = `400 26px ${SANS}`; ctx.fillText(`from X ${HANDLE}`, W - P, yy + 42);
+  ctx.textAlign = "left"; ctx.fillStyle = "#6b7389"; ctx.font = `400 22px ${SANS}`; ctx.fillText("실제 과거 시세 기반 · 투자 권유 아님", P, yy + 42);
   return cv;
 }
 
@@ -613,27 +625,23 @@ async function finish(){
   const text = `나는 [${full}]${chip ? " · " + chip : ""}\n${r.ending} · 수익률 ${pct(ret)}\n${roast}\n\n동학개미 시뮬레이터 made by ${MAKER}(${HANDLE}) #동학개미시뮬레이터\n${GAME_URL}`;
   const intent = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
   $("end").innerHTML = `
-    <img class="cardimg" id="cardImg" alt="결과 카드: ${full}, 수익률 ${pct(ret)}">
+    <a class="cardlink" href="${PROFILE}" target="_blank" rel="noopener" title="${MAKER} X 홈"><img class="cardimg" id="cardImg" alt="결과 카드: ${full}, 수익률 ${pct(ret)}"></a>
     <div class="steps">
       <button class="save" id="saveCard">① 카드 이미지 저장</button>
       <a class="post" href="${intent}" target="_blank" rel="noopener">② X에 올리기 (사진 첨부)</a>
     </div>
     <div class="note" id="endNote">카드를 저장하고 X 글쓰기 창에 사진으로 붙이면 돼. 저장이 안 되면 카드를 길게 눌러 저장해줘.</div>
     <div class="share">
-      <button id="copy">결과 텍스트만 복사</button>
       <a class="follow" href="https://x.com/intent/follow?screen_name=${HANDLE.slice(1)}" target="_blank" rel="noopener">다음 시즌 알림 받기 · ${MAKER} 팔로우</a>
     </div>
     <a class="maker" href="${PROFILE}" target="_blank" rel="noopener"><span>made by <b>${MAKER}</b> from X</span><span>${HANDLE} 홈 가기 →</span></a>
-    <div class="note">다시 하면 마감 날짜가 바뀐다. 같은 기간 다른 선택은 이랬어:</div>
+    <div class="note">같은 기간 다른 선택은 이랬어:</div>
     <div class="bench">${r.bm.map(b => `<div><span>${b[0]}</span><span class="num ${cls(b[1])}">${pct(b[1])}</span></div>`).join("")}<div><span>나</span><span class="num ${cls(ret)}">${pct(ret)}</span></div></div>
     <div class="note">가격: 월말 종가(분할·무상증자 반영 수정주가), Yahoo Finance · 비트코인 업비트 원화 시세. 수수료·세금·배당 미반영. 커뮤·지라시 줄은 그 시절 분위기를 재현한 창작이다. 실제 과거 데이터로 만든 게임이며 투자 권유가 아니다.</div>`;
   $("end").hidden = false; $("play").hidden = true; $("tape").hidden = true;
   $("next").textContent = "다시 하기 ↺"; $("skip").hidden = true;
   $("progT").textContent = `${label(E)} 장 마감`; $("fill").style.width = "100%";
   window.scrollTo(0,0); save();
-  $("copy").addEventListener("click", () => {
-    navigator.clipboard.writeText(text).then(() => toastEnd("복사했어. X에 붙여넣으면 돼."), () => toastEnd("복사가 막혔어. 텍스트를 직접 선택해서 복사해줘."));
-  });
   const cv = await drawCard(r);
   const url = cv.toDataURL("image/png");
   $("cardImg").src = url;
