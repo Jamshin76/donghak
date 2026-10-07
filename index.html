@@ -125,14 +125,15 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .tmaker b{color:var(--fg)}
 .cardlink{display:flex;justify-content:center}
 .cardimg{width:100%;max-width:540px;align-self:center;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.25);background:#0f121a;min-height:200px}
-.steps{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.steps .save,.steps .post{font-size:15px;font-weight:700;padding:14px 10px;border-radius:10px;text-align:center;text-decoration:none;min-height:50px}
-.steps .save{background:var(--accent);color:var(--accentfg);border:0}
-.steps .post{background:var(--fg);color:var(--bg)}
+.shareMain{font-size:17px;font-weight:800;padding:16px 10px;border-radius:12px;border:0;background:var(--accent);color:var(--accentfg);min-height:56px;cursor:pointer}
+.steps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.steps .save,.steps .post,.steps .copy{font-size:14px;font-weight:700;padding:12px 6px;border-radius:10px;text-align:center;text-decoration:none;min-height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.steps .save,.steps .copy{background:var(--panel);color:var(--fg);border:1px solid var(--line)}
+.steps .post{background:var(--fg);color:var(--bg);border:0}
 .share .follow{flex:1;min-width:140px}
 .maker{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 16px;border-radius:10px;background:var(--panel);border:1px solid var(--line);color:var(--fg);text-decoration:none;font-size:14px}
 .maker span:last-child{color:var(--up);font-weight:700}
-@media (max-width:420px){.steps{grid-template-columns:1fr}}
+@media (max-width:360px){.steps{grid-template-columns:1fr}}
 .toast{min-height:20px;font-size:13px;color:var(--muted)}
 .end{display:flex;flex-direction:column;gap:14px}
 .card{background:#10131b;color:#f3f4f8;border-radius:14px;padding:26px 22px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden}
@@ -367,7 +368,7 @@ function sell(id, frac){
 let tt; function toast(m){ $("toast").textContent = m; clearTimeout(tt); tt = setTimeout(() => $("toast").textContent = "", 3500); }
 
 function next(steps){
-  if (S.done) { S = fresh(); $("end").hidden = true; $("play").hidden = false; $("tape").hidden = false; render(true); window.scrollTo(0,0); return; }
+  if (S.done) { S = fresh(); $("end").hidden = true; $("play").hidden = false; $("tape").hidden = false; $("help").hidden = false; render(true); window.scrollTo(0,0); return; }
   for (let k = 0; k < (steps || 1); k++) {
     S.hist.push({i:S.i, q:{...S.q}, cash:S.cash, total:value(S.i)});
     S.prevTotal = value(S.i);
@@ -638,11 +639,13 @@ async function finish(){
   const intent = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
   $("end").innerHTML = `
     <a class="cardlink" href="${PROFILE}" target="_blank" rel="noopener" title="${MAKER} X 홈"><img class="cardimg" id="cardImg" alt="결과 카드: ${full}, 수익률 ${pct(ret)}"></a>
+    <button class="shareMain" id="shareAll">📤 결과 공유하기 (카톡·인스타·커뮤)</button>
     <div class="steps">
-      <button class="save" id="saveCard">① 카드 이미지 저장</button>
-      <a class="post" href="${intent}" target="_blank" rel="noopener">② X에 올리기 (사진 첨부)</a>
+      <button class="save" id="saveCard">💾 카드 저장</button>
+      <a class="post" href="${intent}" target="_blank" rel="noopener">𝕏 X에 올리기</a>
+      <button class="copy" id="copyLink">🔗 링크 복사</button>
     </div>
-    <div class="note" id="endNote">카드를 저장하고 X 글쓰기 창에 사진으로 붙이면 돼. 저장이 안 되면 카드를 길게 눌러 저장해줘.</div>
+    <div class="note" id="endNote">공유하기를 누르면 카드 사진이랑 게임 링크가 같이 나가. X에 올릴 땐 카드를 저장해서 사진으로 붙여줘.</div>
     <div class="share">
       <a class="follow" href="https://x.com/intent/follow?screen_name=${HANDLE.slice(1)}" target="_blank" rel="noopener">다음 시즌 알림 받기 · ${MAKER} 팔로우</a>
     </div>
@@ -650,22 +653,42 @@ async function finish(){
     <div class="note">같은 기간 다른 선택은 이랬어:</div>
     <div class="bench">${r.bm.map(b => `<div><span>${b[0]}</span><span class="num ${cls(b[1])}">${pct(b[1])}</span></div>`).join("")}<div><span>나</span><span class="num ${cls(ret)}">${pct(ret)}</span></div></div>
     <div class="note">가격: 월말 종가(분할·무상증자 반영 수정주가), Yahoo Finance · 비트코인 업비트 원화 시세. 수수료·세금·배당 미반영. 커뮤·지라시 줄은 그 시절 분위기를 재현한 창작이다. 실제 과거 데이터로 만든 게임이며 투자 권유가 아니다.</div>`;
-  $("end").hidden = false; $("play").hidden = true; $("tape").hidden = true;
+  $("end").hidden = false; $("play").hidden = true; $("tape").hidden = true; $("help").hidden = true;
   $("next").textContent = "다시 하기 ↺"; $("skip").hidden = true;
   $("progT").textContent = `${label(E)} 장 마감`; $("fill").style.width = "100%";
   window.scrollTo(0,0); save();
   const cv = await drawCard(r);
   const url = cv.toDataURL("image/png");
   $("cardImg").src = url;
-  $("saveCard").addEventListener("click", async () => {
-    const name = `동학개미_${main.replace(/\s/g,"")}.png`;
+  const name = `동학개미_${main.replace(/\s/g,"")}.png`;
+  const cardFile = async () => new File([await new Promise(res => cv.toBlob(res, "image/png"))], name, {type:"image/png"});
+  const download = () => { const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); };
+  // 링크는 게임 주소로 바로. 아돈노미 X는 카드·사이트 곳곳의 크레딧으로 연결된다.
+  const dare = `나 동학개미 시뮬레이터에서 [${full}] 받음. 수익률 ${pct(ret)} ㅋㅋ\n2020년 코로나 폭락장부터 1,000만원 굴려보기. 너는 몇 등급 나오냐?\n👉 ${GAME_URL}`;
+  const copyText = t => (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).catch(() => {
+    const ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand && document.execCommand("copy"); ta.remove(); if (!ok) throw 0;
+  });
+  $("shareAll").addEventListener("click", async () => {
     try {
-      const blob = await new Promise(res => cv.toBlob(res, "image/png"));
-      const file = new File([blob], name, {type:"image/png"});
-      if (navigator.canShare && navigator.canShare({files:[file]})) { await navigator.share({files:[file], text}); return; }
+      const file = await cardFile();
+      if (navigator.canShare && navigator.canShare({files:[file]})) { await navigator.share({files:[file], title:"동학개미 시뮬레이터", text:dare}); return; }
+      if (navigator.share) { await navigator.share({title:"동학개미 시뮬레이터", text:dare.replace(`\n👉 ${GAME_URL}`, ""), url:GAME_URL}); return; }
     } catch(e){ if (e && e.name === "AbortError") return; }
-    const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    // PC 등 공유창이 없는 곳: 카드 저장 + 도전장 문구 복사
+    download();
+    copyText(dare).then(() => toastEnd("카드 저장하고 도전장 문구도 복사했어. 카톡·커뮤에 붙여넣고 사진 첨부하면 끝!"), () => toastEnd("카드는 저장했어. 링크는 " + GAME_URL + " 붙여주면 돼."));
+  });
+  $("saveCard").addEventListener("click", async () => {
+    try {
+      const file = await cardFile();
+      if (navigator.canShare && navigator.canShare({files:[file]}) && /Android|iPhone|iPad/i.test(navigator.userAgent)) { await navigator.share({files:[file]}); return; }
+    } catch(e){ if (e && e.name === "AbortError") return; }
+    download();
     toastEnd("저장했어. 안 보이면 카드를 길게 눌러 저장해줘.");
+  });
+  $("copyLink").addEventListener("click", () => {
+    copyText(dare).then(() => toastEnd("복사 완료! 단톡방이나 커뮤에 붙여넣으면 링크 미리보기가 같이 떠."), () => toastEnd("복사가 막혔어. 주소는 " + GAME_URL));
   });
 }
 function toastEnd(m){ const n = $("endNote"); if (n) n.textContent = m; }
