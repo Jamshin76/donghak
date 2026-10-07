@@ -157,8 +157,6 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .share a,.share button{flex:1;min-width:140px;text-align:center;text-decoration:none;font-weight:700;font-size:15px;padding:12px;border-radius:10px}
 .share a{background:var(--fg);color:var(--bg)}
 .note{font-size:12px;color:var(--muted)}
-.vs{border:2px solid var(--accent);border-radius:12px;padding:12px 14px;font-size:15px;font-weight:700;background:var(--panel)}
-.vs b{color:var(--up)}
 .intro{background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:12px 14px;font-size:14px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 @keyframes pop{from{transform:translateY(4px);opacity:.4}to{transform:none;opacity:1}}
@@ -174,7 +172,6 @@ button:disabled{opacity:.35;cursor:not-allowed}
     </div>
     <div class="date" id="date">2020.02<small>시드 1,000만원</small></div>
   </header>
-  <div class="vs" id="vs" hidden></div>
 
   <section class="tape" id="tape" aria-label="이번 달 종목별 등락"></section>
 
@@ -524,10 +521,9 @@ function titles(){
   const main = combo ? {name:combo.name, roast:combo.roast} : got[0];
   const used = combo ? combo.need : [got[0].id];
   const badges = got.filter(t => !used.includes(t.id)).map(t => t.name);
-  const tierIdx = TIERS.findIndex(t => c.ret <= t.max), tier = TIERS[tierIdx].name;
-  const key = `${tierIdx}-${combo ? "c" + COMBOS.indexOf(combo) : got[0].id}`;
+  const tier = TIERS.find(t => c.ret <= t.max).name;
   const chip = CHIPS.find(k => fin >= k.min);
-  return {ret:c.ret, fin, E, tier, key, main:main.name, roast:main.roast, full:`${tier} ${main.name}`, badges, chip: chip ? chip.name : ""};
+  return {ret:c.ret, fin, E, tier, main:main.name, roast:main.roast, full:`${tier} ${main.name}`, badges, chip: chip ? chip.name : ""};
 }
 
 // ===== 결과 카드 (캔버스로 그려서 화면 표시 = 저장 이미지) =====
@@ -639,9 +635,7 @@ async function finish(){
     ["코스피 지수", KOSPI[E]/KOSPI[0]-1],
     ...ASSETS.map(a => ["최고의 한 종목: " + a.name, a.p[E]/a.p[0]-1]).sort((x,y) => y[1]-x[1]).slice(0,1),
   ];
-  // 내 칭호 전용 링크: 붙여넣기만 해도 X·카톡 미리보기에 내 칭호 이미지가 뜬다 (r/ 폴더의 미리 만든 페이지)
-  const shareURL = `${GAME_URL}r/${r.key}.html`;
-  const text = `나는 [${full}]${chip ? " · " + chip : ""}\n${r.ending} · 수익률 ${pct(ret)}\n${roast}\n\n동학개미 시뮬레이터 made by ${MAKER}(${HANDLE}) #동학개미시뮬레이터\n${shareURL}`;
+  const text = `나는 [${full}]${chip ? " · " + chip : ""}\n${r.ending} · 수익률 ${pct(ret)}\n${roast}\n\n동학개미 시뮬레이터 made by ${MAKER}(${HANDLE}) #동학개미시뮬레이터\n${GAME_URL}`;
   const intent = "https://x.com/intent/tweet?text=" + encodeURIComponent(text);
   $("end").innerHTML = `
     <a class="cardlink" href="${PROFILE}" target="_blank" rel="noopener" title="${MAKER} X 홈"><img class="cardimg" id="cardImg" alt="결과 카드: ${full}, 수익률 ${pct(ret)}"></a>
@@ -650,7 +644,7 @@ async function finish(){
       <button class="save" id="saveCard">💾 카드 저장</button>
       <button class="copy" id="copyLink">📋 글+링크 복사</button>
     </div>
-    <div class="note" id="endNote">X에 올리기나 링크 복사로 나가는 링크엔 내 칭호 이미지가 미리보기로 붙어. 카톡·커뮤에도 링크만 붙여넣으면 돼.</div>
+    <div class="note" id="endNote">X에 올리기를 누르면 글이 채워진 X 글쓰기 창이 열려. 카드 사진만 붙이면 끝. 카톡·커뮤엔 글+링크 복사해서 카드 사진이랑 같이 붙여줘.</div>
     <div class="share">
       <a class="follow" href="https://x.com/intent/follow?screen_name=${HANDLE.slice(1)}" target="_blank" rel="noopener">다음 시즌 알림 받기 · ${MAKER} 팔로우</a>
     </div>
@@ -669,7 +663,7 @@ async function finish(){
   const cardFile = async () => new File([await new Promise(res => cv.toBlob(res, "image/png"))], name, {type:"image/png"});
   const download = () => { const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); };
   // 링크는 게임 주소로 바로. 아돈노미 X는 카드·사이트 곳곳의 크레딧으로 연결된다.
-  const dare = `나 동학개미 시뮬레이터에서 [${full}] 받음. 수익률 ${pct(ret)} ㅋㅋ\n2020년 코로나 폭락장부터 1,000만원 굴려보기. 너는 몇 등급 나오냐?\n👉 ${shareURL}`;
+  const dare = `나 동학개미 시뮬레이터에서 [${full}] 받음. 수익률 ${pct(ret)} ㅋㅋ\n2020년 코로나 폭락장부터 1,000만원 굴려보기. 너는 몇 등급 나오냐?\n👉 ${GAME_URL}`;
   const copyText = t => (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).catch(() => {
     const ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();
     const ok = document.execCommand && document.execCommand("copy"); ta.remove(); if (!ok) throw 0;
@@ -682,7 +676,7 @@ async function finish(){
     if (IS_AND) {
       ev.preventDefault(); ev.stopPropagation();
       download();
-      toastEnd("링크에 내 칭호 이미지가 미리보기로 붙어서 바로 게시해도 돼. 상세 카드까지 올리려면 방금 저장된 카드를 사진으로 붙여줘.");
+      toastEnd("카드를 갤러리에 저장했어. X 글쓰기 창에서 사진 버튼 눌러 방금 저장한 카드만 붙이면 끝!");
       setTimeout(() => { location.href = xAndroidUrl(intent); }, 700);
       return;
     }
@@ -745,16 +739,6 @@ function tut(show){ $("tut").hidden = !show; $("tp1").hidden = false; $("tp2").h
 $("tutNext").addEventListener("click", () => { $("tp1").hidden = true; $("tp2").hidden = false; $("tutGo").focus(); });
 $("tutGo").addEventListener("click", () => { tut(false); try { localStorage.setItem("dongak-tut", "1"); } catch(e){} });
 $("help").addEventListener("click", () => tut(true));
-// 친구 결과 링크로 들어온 경우: 친구 칭호를 보여주고 도전시킨다
-(() => {
-  const k = new URLSearchParams(location.search).get("vs"); if (!k) return;
-  const m = k.match(/^(\d)-(.+)$/); if (!m || !TIERS[+m[1]]) return;
-  const main = m[2][0] === "c" && /^c\d+$/.test(m[2]) ? COMBOS[+m[2].slice(1)] : TITLES.find(t => t.id === m[2]);
-  if (!main) return;
-  const el = $("vs"); el.textContent = ""; el.append("친구 칭호는 ");
-  const b = document.createElement("b"); b.textContent = `[${TIERS[+m[1]].name} ${main.name}]`; el.append(b, ". 너는 이길 수 있어? 🔥");
-  el.hidden = false;
-})();
 let seenTut = false; try { seenTut = !!localStorage.getItem("dongak-tut"); } catch(e){}
 if (!seenTut && !S.done && S.i === 0) tut(true);
 </script>
