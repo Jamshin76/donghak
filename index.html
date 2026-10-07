@@ -733,11 +733,22 @@ function save(){ try { localStorage.setItem("dongak-s2", JSON.stringify(S)); } c
 function load(){ try { const s = JSON.parse(localStorage.getItem("dongak-s2")); if (s && typeof s.i === "number" && s.q && typeof s.endAt === "number") return s; } catch(e){} return null; }
 
 S = load() || fresh();
-// 카톡·인스타 등 앱 안 브라우저는 공유창(카드 보내기)이 안 된다. 아직 시작 전이면 기본 브라우저로 옮긴다.
+// 앱 안 브라우저에서 넘어온 경우: 주소 뒤에 실려 온 진행 상태를 이어받는다
+try {
+  const m = new URLSearchParams(location.search).get("s");
+  if (m) {
+    const t = JSON.parse(decodeURIComponent(escape(atob(m))));
+    if (t && typeof t.i === "number" && t.q && typeof t.endAt === "number") { S = t; save(); try { localStorage.setItem("dongak-tut", "1"); } catch(e){} }
+    history.replaceState(null, "", location.pathname);
+  }
+} catch(e){}
+// 카톡·인스타 등 앱 안 브라우저는 이미지 복사·공유가 막혀 있다. 하던 게임까지 실어서 기본 브라우저로 옮긴다.
 const INAPP = /KAKAOTALK|Instagram|FBAN|FBAV|NAVER\(inapp|Line\/|DaumApps|everytimeApp/i.test(navigator.userAgent);
-if (INAPP && !S.done && S.i === 0) {
-  if (/KAKAOTALK/i.test(navigator.userAgent)) location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href);
-  else if (IS_AND) location.href = `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(location.href)};end`;
+if (INAPP && (IS_AND || /KAKAOTALK/i.test(navigator.userAgent))) {
+  let target = location.origin + location.pathname;
+  if (S.i > 0 || S.done) target += "?s=" + encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(S)))));
+  if (/KAKAOTALK/i.test(navigator.userAgent)) location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(target);
+  else location.href = `intent://${target.replace(/^https?:\/\//, "")}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(target)};end`;
 }
 // 아이폰 인스타·페북 등은 밖으로 강제로 못 빼서 안내만 띄운다
 if (INAPP && IS_IOS && !/KAKAOTALK/i.test(navigator.userAgent)) {
