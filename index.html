@@ -703,9 +703,10 @@ async function finish(){
       copied.then(() => toastEnd("글+링크는 복사해뒀어. 카드 보낸 채팅창에 붙여넣기만 하면 끝!"), () => toastEnd("카드는 보냈는데 복사가 막혔어. 주소는 " + GAME_URL));
       return;
     }
-    // 공유창이 없는 곳(PC 등): 카드 저장 + 글 복사
+    // 공유창이 없는 곳(PC, 앱 안 브라우저 등): 카드 저장 + 글 복사
     download();
-    copied.then(() => toastEnd("카드 저장하고 글+링크도 복사했어. 붙여넣고 카드 사진 첨부하면 끝!"), () => toastEnd("카드는 저장했어. 주소는 " + GAME_URL));
+    const why = (IS_AND || IS_IOS) ? "지금 브라우저는 공유창이 없어서 " : "";
+    copied.then(() => toastEnd(why + "카드 저장하고 글+링크도 복사했어. 붙여넣고 카드 사진 첨부하면 끝!" + (why ? " 크롬·사파리에서 열면 공유창으로 바로 보낼 수 있어." : "")), () => toastEnd("카드는 저장했어. 주소는 " + GAME_URL));
   });
 }
 // ===== 폰에서는 X 링크를 X 앱으로 연다 (이미 로그인된 앱을 쓰게) =====
@@ -742,6 +743,12 @@ function save(){ try { localStorage.setItem("dongak-s2", JSON.stringify(S)); } c
 function load(){ try { const s = JSON.parse(localStorage.getItem("dongak-s2")); if (s && typeof s.i === "number" && s.q && typeof s.endAt === "number") return s; } catch(e){} return null; }
 
 S = load() || fresh();
+// 카톡·인스타 등 앱 안 브라우저는 공유창(카드 보내기)이 안 된다. 아직 시작 전이면 기본 브라우저로 옮긴다.
+const INAPP = /KAKAOTALK|Instagram|FBAN|FBAV|NAVER\(inapp|Line\/|DaumApps|everytimeApp/i.test(navigator.userAgent);
+if (INAPP && !S.done && S.i === 0) {
+  if (/KAKAOTALK/i.test(navigator.userAgent)) location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href);
+  else if (IS_AND) location.href = `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(location.href)};end`;
+}
 if (S.done) { render(); finish(); } else render();
 // ===== 첫 방문 튜토리얼 =====
 function tut(show){ $("tut").hidden = !show; $("tp1").hidden = false; $("tp2").hidden = true; if (show) $("tutNext").focus(); }
