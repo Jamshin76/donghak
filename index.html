@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>동학개미 시뮬레이터</title>
+<meta name="description" content="2020년 코로나 폭락장, 시드 1,000만원. 실제 월말 종가로 사고팔고, 언제 끝날지 모르는 장 마감에서 칭호를 받아라.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jamshin76.github.io/donghak/">
+<meta property="og:title" content="동학개미 시뮬레이터">
+<meta property="og:description" content="2020년 코로나 폭락장, 시드 1,000만원. 장은 언제 끝날지 모른다. 너의 칭호는?">
+<meta property="og:image" content="https://jamshin76.github.io/donghak/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@DONTTknow_me">
+<meta name="twitter:creator" content="@DONTTknow_me">
+<meta name="twitter:title" content="동학개미 시뮬레이터">
+<meta name="twitter:description" content="2020년 코로나 폭락장, 시드 1,000만원. 장은 언제 끝날지 모른다. 너의 칭호는?">
+<meta name="twitter:image" content="https://jamshin76.github.io/donghak/og.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: a one-column HTS-style trading screen. Ticker tape on top, news ticket, account, order rows, sticky "next month" bar. Red = up, blue = down (Korean market convention). */
+:root{
+  --bg:#eef0f4; --panel:#ffffff; --panel2:#f6f7fa; --line:#d9dde6;
+  --fg:#12151c; --muted:#5b6476;
+  --up:#d42a3c; --down:#1d5fd0; --upbg:#fde8ea; --downbg:#e6eefc;
+  --accent:#ffcc1a; --accentfg:#1a1400;
+  --display:"Black Han Sans","IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b0e14; --panel:#141923; --panel2:#1a2030; --line:#283044;
+  --fg:#e8ebf2; --muted:#98a1b5;
+  --up:#ff5468; --down:#5b95ff; --upbg:#3a1820; --downbg:#16243f;
+  --accent:#ffcc1a; --accentfg:#1a1400; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0b0e14; --panel:#141923; --panel2:#1a2030; --line:#283044;
+  --fg:#e8ebf2; --muted:#98a1b5;
+  --up:#ff5468; --down:#5b95ff; --upbg:#3a1820; --downbg:#16243f;
+  --accent:#ffcc1a; --accentfg:#1a1400; color-scheme:dark;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:16px 120px;display:flex;flex-direction:column;gap:14px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--muted)}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(30px,7vw,44px);line-height:1;margin:0;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--up)}
+.season{font-size:12px;color:var(--muted);letter-spacing:.06em;margin-top:6px}
+.date{font-family:var(--display);font-size:28px;line-height:1;text-align:right}
+.date small{display:block;font-family:var(--body);font-size:12px;color:var(--muted);margin-top:4px}
+.tape{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tape div{background:var(--panel);padding:8px 10px;min-width:0}
+.tape b{display:block;font-size:12px;font-weight:500;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tape span{font-size:15px;font-weight:600}
+.tape div.hot{background:var(--upbg)} .tape div.cold{background:var(--downbg)}
+@media (max-width:560px){.tape{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.news{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.news .tag{font-size:11px;letter-spacing:.12em;color:var(--up);font-weight:700}
+.nlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.nlist li{display:flex;gap:10px;align-items:baseline;font-size:15px;line-height:1.4}
+.nlist li.nw{font-weight:600}
+.nlist li.ch{color:var(--muted);font-size:14px}
+.kd{flex:none;font-size:11px;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:4px;background:var(--panel2);color:var(--muted);min-width:42px;text-align:center}
+.nlist li.nw .kd{background:var(--upbg);color:var(--up)}
+.feel .warn{background:var(--accent);color:var(--accentfg);font-weight:700}
+.prog .fill.danger{background:var(--accent)}
+.skip{font-size:14px;padding:12px 12px;min-height:48px;border-radius:10px}
+.feel{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:500}
+.feel div{padding:8px 12px;border-radius:8px;background:var(--panel2)}
+.acct{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px}
+.acct > div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.acct label{font-size:12px;color:var(--muted);display:block}
+.acct .big{font-size:24px;font-weight:600;line-height:1.2}
+.acct .mid{font-size:17px;font-weight:600}
+@media (max-width:560px){.acct{grid-template-columns:1fr 1fr}.acct > div:first-child{grid-column:1 / -1}}
+.book{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.bookhead{display:flex;justify-content:space-between;padding:10px 14px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;padding:12px 14px;border-bottom:1px solid var(--line);align-items:center}
+.row:last-child{border-bottom:0}
+.nm{font-weight:700;font-size:15px}
+.nm small{font-weight:400;color:var(--muted);font-size:12px;margin-left:6px}
+.px{text-align:right;font-weight:600}
+.px small{display:block;font-size:12px;font-weight:500}
+.hold{font-size:13px;color:var(--muted)}
+.btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+button{font-family:var(--body);font-size:13px;font-weight:700;border-radius:7px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);padding:7px 10px;cursor:pointer;min-height:34px}
+button:hover{border-color:var(--muted)}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.buy{color:var(--up);border-color:color-mix(in srgb,var(--up) 40%,var(--line))}
+button.sell{color:var(--down);border-color:color-mix(in srgb,var(--down) 40%,var(--line))}
+button:disabled{opacity:.35;cursor:not-allowed}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-top:1px solid var(--line)}
+.bar .in{max-width:760px;margin:0 auto;display:flex;gap:12px;align-items:center}
+.prog{flex:1;min-width:0}
+.prog .t{font-size:12px;color:var(--muted);display:flex;justify-content:space-between}
+.prog .track{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:4px}
+.prog .fill{height:100%;background:var(--up);width:0;transition:width .3s}
+.next{font-family:var(--display);font-weight:400;font-size:20px;background:var(--accent);color:var(--accentfg);border:0;padding:12px 22px;border-radius:10px;min-height:48px}
+.toast{min-height:20px;font-size:13px;color:var(--muted)}
+.end{display:flex;flex-direction:column;gap:14px}
+.card{background:#10131b;color:#f3f4f8;border-radius:14px;padding:26px 22px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden}
+.card .k{font-size:12px;letter-spacing:.14em;color:#ffcc1a;font-weight:700}
+.card .title{font-family:var(--display);font-size:clamp(34px,9vw,54px);line-height:1.05;text-wrap:balance}
+.card .tier{font-size:17px;font-weight:700;color:#ffcc1a}
+.card .tier em{font-style:normal;font-size:12px;border:1px solid #ffcc1a;border-radius:99px;padding:2px 8px;margin-left:6px;vertical-align:2px}
+.follow{display:block;text-align:center;padding:12px;border-radius:10px;border:1px dashed var(--muted);color:var(--fg);text-decoration:none;font-weight:600;font-size:14px}
+.card .roast{font-size:15px;color:#c6cbd8}
+.card .ret{font-family:var(--mono);font-size:clamp(30px,8vw,46px);font-weight:600}
+.card .ret.pos{color:#ff5468} .card .ret.neg{color:#5b95ff}
+.card .url{font-size:13px;color:#ffcc1a;font-family:var(--mono)}
+.card .badges{display:flex;flex-wrap:wrap;gap:6px}
+.card .badges span{font-size:12px;border:1px solid #39405a;border-radius:99px;padding:3px 10px;color:#dfe3ee}
+.card .foot{display:flex;justify-content:space-between;font-size:13px;color:#98a1b5;border-top:1px solid #2a3044;padding-top:10px;margin-top:4px;gap:8px;flex-wrap:wrap}
+.card .foot b{color:#fff}
+.bench{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 0}
+.bench div{display:flex;justify-content:space-between;padding:8px 14px;gap:12px}
+.bench div + div{border-top:1px solid var(--line)}
+.share{display:flex;gap:8px;flex-wrap:wrap}
+.share a,.share button{flex:1;min-width:140px;text-align:center;text-decoration:none;font-weight:700;font-size:15px;padding:12px;border-radius:10px}
+.share a{background:var(--fg);color:var(--bg)}
+.note{font-size:12px;color:var(--muted)}
+.intro{background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:12px 14px;font-size:14px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+@keyframes pop{from{transform:translateY(4px);opacity:.4}to{transform:none;opacity:1}}
+.news.pop,.feel.pop{animation:pop .25s ease-out}
+</style>
+
+<div class="wrap" id="app">
+  <header>
+    <div>
+      <h1>동학개미 <em>시뮬레이터</em></h1>
+      <div class="season">2020.02 코로나 폭락장 출발 · 장 마감은 2024.06~2025.12 중 어느 달 (안 알려줌)</div>
+    </div>
+    <div class="date" id="date">2020.02<small>시드 1,000만원</small></div>
+  </header>
+
+  <section class="tape" id="tape" aria-label="이번 달 종목별 등락"></section>
+
+  <div id="play">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <article class="news" id="news"></article>
+      <div class="feel" id="feel"></div>
+      <section class="acct">
+        <div><label>총 평가금액</label><div class="big num" id="total"></div><div class="num" id="totalRet"></div></div>
+        <div><label>이번 달 손익</label><div class="mid num" id="mPnl"></div></div>
+        <div><label>예수금</label><div class="mid num" id="cash"></div></div>
+      </section>
+      <section class="book">
+        <div class="bookhead"><span>종목 · 이번 달 종가에 체결</span><span>수정주가 기준 · 수수료 없음</span></div>
+        <div id="rows"></div>
+      </section>
+      <div class="toast" id="toast" role="status"></div>
+    </div>
+  </div>
+
+  <section class="end" id="end" hidden></section>
+</div>
+
+<div class="bar">
+  <div class="in">
+    <div class="prog">
+      <div class="t"><span id="progT">0 / 46개월</span><span id="progR"></span></div>
+      <div class="track"><div class="fill" id="fill"></div></div>
+    </div>
+    <button class="skip" id="skip">3개월 존버 ⏩</button>
+    <button class="next" id="next">다음 달 ▶</button>
+  </div>
+</div>
+
+<script>
+// 출처: 월말 종가, Yahoo Finance 월봉(분할·무상증자 반영 수정주가), 비트코인은 업비트 KRW-BTC 월봉. 2020.02 ~ 2023.12, 47개 시점.
+const GAME_URL = "https://jamshin76.github.io/donghak/";
+const HANDLE = "@DONTTknow_me";
+const ASSETS = [
+  {id:"sam", name:"삼성전자", tag:"국민주", p:[54200,47750,50000,50700,52800,57900,54000,58200,56600,66700,81000, 82000,82500,81400,81500,80500,80700,78500,76700,74100,69800,71300,78300, 73300,71900,69600,67400,67400,57000,61400,59700,53100,59400,62200,55300, 61400,60600,64000,65500,71400,72200,69800,66900,68400,66900,72800,78500, 72700,73400,82400,77500,73500,81500,83900,74300,61500,59200,54200,53200, 52400,54500,57800,55500,56200,59800,71400,69700,83900,107500,100500,119900]},
+  {id:"hyx", name:"SK하이닉스", tag:"반도체", p:[87900,83300,83700,81500,85100,82800,75100,84000,79900,97500,118500, 122500,141500,132500,128000,127000,127500,112500,106500,103000,103000,114000,131000, 120500,123000,118000,112500,108000,91000,97900,95200,83100,82700,85000,75000, 88500,89400,88600,89500,108600,115200,123400,121800,114700,116300,133900,141500, 134700,156200,183000,174200,189200,236500,194600,173700,174600,186300,159900,173900, 199200,190200,190700,177500,204500,292000,273500,269000,347500,559000,530000,651000]},
+  {id:"kko", name:"카카오", tag:"국민주2", p:[34400,31100,36800,52700,53500,68700,81400,72900,66000,73600,77900, 88200,97600,99600,113500,123000,163000,147000,155000,118000,125500,122000,112500, 85000,94400,106500,89900,85000,69900,74800,73400,57100,50700,56400,53100, 61900,62400,61100,58100,56200,49100,51300,48100,43950,37800,50500,54300, 52500,53300,53700,48600,43300,40650,39200,37200,36150,36950,40100,38200, 38350,43150,39100,38250,42700,60000,58000,62500,59600,65100,58700,60100]},
+  {id:"hmm", name:"HMM", tag:"흠슬라", p:[3255,3100,3610,4725,4685,5880,5760,7210,8970,13350,13950, 13650,19000,29000,39200,47900,43900,40000,42000,33700,26650,23600,26900, 21900,29900,29150,28400,32450,24600,24850,22250,18500,19100,22300,19550, 21850,22550,20350,20400,17750,18850,17490,16660,16260,14570,15490,19580, 19290,18270,15720,15850,18000,19630,18200,16970,18530,17120,17960,17660, 19040,19590,19560,18260,21300,22500,23450,22100,20050,20550,19140,20500]},
+  {id:"ebm", name:"에코프로비엠", tag:"2차전지", p:[20100,15100,18000,29600,29800,34600,38300,33700,30700,37400,42000, 45300,40100,40300,44700,43400,52400,71500,79100,115400,101300,134200,123700, 81100,88900,98200,117700,126250,113500,119400,112200,88100,115100,113800,92100, 100000,166300,224500,267000,249000,249000,419000,324500,253000,196200,274000,288000, 213500,266500,274000,238500,191300,183000,179900,168300,184500,170500,135200,109900, 131000,119000,96200,101500,89700,100600,111100,121200,113000,160000,149900,146600]},
+  {id:"hwa", name:"한화에어로스페이스", tag:"방산", p:[30500,22800,29900,27000,27300,27000,28700,28200,27900,29300,31700, 45200,41000,45400,42900,52000,52200,57500,56500,55800,50000,45200,53300, 53100,54300,58000,59200,59900,54100,71500,90400,68300,73600,80600,81800, 89300,100000,110200,114100,117900,141500,135700,126800,116200,112200,139800,138300, 153400,208300,227200,234900,227700,277100,319900,322100,297000,368000,312500,326500, 400000,594000,627000,797000,811000,848000,996000,884000,1107000,979000,852000,941000]},
+  {id:"hyd", name:"현대차", tag:"자동차", p:[115000,88700,93600,98000,97700,126500,176500,178500,164500,181500,192000, 229000,237000,218000,212000,235000,239500,218000,212500,200000,208000,195500,209000, 186500,174000,180500,186000,189500,180500,196000,196000,176500,164500,169000,151000, 170000,176300,184500,197500,200000,206500,196000,189100,191100,169700,184300,203500, 194600,250500,233000,251000,253000,295000,249000,255500,244000,215000,218500,212000, 206000,193000,197200,190600,185300,203500,213000,220000,215000,290000,261500,296500]},
+  {id:"inv", name:"KODEX 인버스", tag:"하락 베팅", p:[6930,7500,6790,6510,6160,5740,5565,5485,5630,4875,4255, 4070,3995,3925,3855,3790,3680,3805,3835,4000,4125,4275,4005, 4385,4335,4265,4395,4395,5025,4770,4790,5445,5110,4780,5195, 4780,4825,4715,4680,4505,4515,4455,4595,4705,5040,4550,4255, 4570,4325,4090,4195,4285,4015,4065,4220,4415,4505,4705,4795, 4605,4565,4555,4450,4190,3620,3430,3490,3160,2570,2670,2430]},
+  {id:"btc", name:"비트코인", tag:"코인", frac:true, p:[10374000,7799000,10477000,11432000,10903000,13416000,13739000,12558000,15606000,21315000,32042000, 36408000,51798000,71513000,67939000,43761000,40674000,47979000,55230000,53523000,72391000,70702000,56784000, 47266000,52332000,55352000,49283000,39923000,26003000,30751000,27530000,27924000,28778000,23192000,21079000, 29064000,31024000,37540000,39149000,36391000,40547000,37929000,35502000,36600000,47030000,50586000,57047000, 58738000,85910000,100970000,87137000,94505000,87920000,90345000,80262000,83730000,98112000,133701000,139257000, 156580000,124499000,123209000,136050000,147932000,145759000,161398000,150700000,162828000,164275000,135744000,128067000]},
+];
+const KOSPI = [1987.01,1754.64,1947.56,2029.60,2108.33,2249.37,2326.17,2327.89,2267.15,2591.34,2873.47, 2976.21,3012.95,3061.42,3147.86,3203.92,3296.68,3202.32,3199.27,3068.82,2970.68,2839.01,2977.65, 2663.34,2699.18,2757.65,2695.05,2685.90,2332.64,2451.50,2472.05,2155.49,2293.61,2472.53,2236.40, 2425.08,2412.85,2476.86,2501.53,2577.12,2564.28,2632.58,2556.27,2465.07,2277.99,2535.29,2655.28, 2497.09,2642.36,2746.63,2692.06,2636.52,2797.82,2770.69,2674.31,2593.27,2556.15,2455.91,2399.49, 2517.37,2532.78,2481.12,2556.61,2697.67,3071.70,3245.44,3186.01,3424.60,4107.50,3926.59,4214.17];
+// 각 달: 뉴스 3줄 + 커뮤/지라시 2줄. 커뮤·지라시는 그 시절 분위기를 재현한 창작이다.
+const NEWS = [
+ ["대구 신천지발 코로나 집단감염, 위기경보 '심각' 격상","마스크 품절 대란, 약국 앞 긴 줄","코스피 2,000선 붕괴, 외국인 매도 시작","커뮤|코로나 별거 아님, 사스 때도 금방 회복함","지라시|다음 달 서킷브레이커 온다는 증권사 내부 문건 돈다"],
+ ["코스피 1,457 마감, 서킷브레이커 발동","미 연준 제로금리·무제한 양적완화","외국인 매도 물량 개인이 다 받아내, '동학개미운동' 탄생","커뮤|삼전 4만원대면 평생 한 번 오는 기회 아님?","커뮤|인버스 2배 풀매수했다 이제 끝났다 이 나라"],
+ ["WTI 사상 첫 마이너스 유가","원유 ETN에 개미 몰려 괴리율 폭발","미 실업수당 청구 폭증, 그런데 증시는 반등","커뮤|폭락장 끝났나? 아니면 데드캣?","지라시|카카오 언택트 수혜로 기관 매수 들어온다"],
+ ["한은 기준금리 0.50% 사상 최저","긴급재난지원금 전 국민 지급","카카오·네이버 언택트 대장주로 신고가","커뮤|예금 이자 0.5%면 그냥 주식이 답","커뮤|HMM 3천원대 잡주 누가 사냐"],
+ ["6·17 부동산 대책, '집 대신 주식' 계좌 개설 폭증","주식 계좌 수 3천만 개 돌파","SK바이오팜 공모 청약 증거금 31조","커뮤|공모주 청약 넣으려고 마통 뚫었다","지라시|하반기 2차 폭락 온다는 유명 유튜버 경고"],
+ ["SK바이오팜 상장 첫날 '따상'","한국판 뉴딜 발표, 2차전지·수소차 테마 들썩","현대차 수소·전기차 기대감에 급등","커뮤|카카오 8만원 돌파, 아직 안 늦었다","커뮤|에코프로비엠 이거 뭐하는 회사임?"],
+ ["광복절 이후 코로나 재확산, 거리두기 2.5단계","카카오 시가총액 상위권 질주","개인 신용융자 잔고 사상 최대","커뮤|빚투 안 하면 바보 되는 장","지라시|카카오게임즈 청약 경쟁률 1,500대1 예상"],
+ ["카카오게임즈 '따상', 청약 증거금 58조","미 나스닥 기술주 급락, 테슬라 하루 -21%","빅히트 공모가 13만5천원 확정","커뮤|빅히트 따상 가면 35만원, 무조건 청약","커뮤|성장주 끝물 아니냐는 얘기 슬슬 나옴"],
+ ["빅히트 상장 후 연일 급락","이건희 삼성전자 회장 별세","미 대선 앞두고 관망세, 코스피 2,260대","커뮤|빅히트 상투 잡았다 한강 간다","지라시|삼성 상속세 때문에 배당 늘린다"],
+ ["화이자 백신 예방효과 90% 발표","미 대선 결과 확정, 외국인 대거 귀환","코스피 2,591 마감, 사상 최고치 근접","커뮤|백신 나오면 HMM 같은 경기민감주 간다","커뮤|삼전 7만 뚫었다 10만 간다"],
+ ["코스피 2,873 사상 최고 마감","삼성전자 '8만전자' 등극","비트코인 3천만원 돌파, 2017년 고점 넘어","커뮤|삼전은 10만 간다 단톡방 도배","지라시|내년 상반기 코스피 3,500 증권사 전망"],
+ ["코스피 3,000 첫 돌파","삼성전자 장중 9만6천원","현대차 '애플카' 협력설에 급등","커뮤|지금 안 사면 영원히 못 산다","커뮤|주식 안 하는 친구가 삼전 샀다길래 무서워짐"],
+ ["미 국채금리 급등, 성장주 흔들","게임스탑 사태 여파로 공매도 논쟁 격화","비트코인 5천만원 돌파, 테슬라 비트코인 매입","커뮤|공매도 재개되면 다 죽는다","지라시|HMM 운임 사상 최고, 실적 대박 예정"],
+ ["쿠팡 뉴욕증시 상장","SK바이오사이언스 상장 첫날 '따상'","LH 직원 땅투기 의혹","커뮤|HMM 3만원 돌파 '흠슬라' 별명 붙음","커뮤|비트코인 1억 간다는 말이 진짜 같음"],
+ ["카카오 5대1 액면분할 후 재상장","비트코인 8천만원 돌파, 업비트 거래대금 코스피 추월","코인 '김치 프리미엄' 20% 넘어","커뮤|카카오 1주 10만원대면 개미도 살 만함","지라시|도지코인 1달러 간다"],
+ ["공매도 부분 재개","머스크 '비트코인 결제 중단', 코인 폭락","HMM 4만원대 신고가","커뮤|코인 -40% 물렸다 존버한다","커뮤|HMM 이제 10만원 간다는 글 보임"],
+ ["카카오, 네이버 제치고 시가총액 3위","코스피 3,296 사상 최고 마감","하이브·크래프톤 등 대어 공모 줄줄이 대기","커뮤|카카오 국민주 등극, 20만원 간다","지라시|카카오페이·뱅크 상장하면 모회사도 따라 오른다"],
+ ["코스피 장중 사상 최고 3,305","코로나 4차 대유행, 거리두기 4단계","한은 연내 금리 인상 시사","커뮤|이번이 진짜 마지막 상승이다 vs 이제 시작","커뮤|삼전 8만원 박스권 지겹다"],
+ ["한은 기준금리 0.75%로 첫 인상","카카오뱅크 상장, 시총 금융 1위","크래프톤 공모가 고평가 논란 속 상장","커뮤|카뱅 PBR 몇 배인지 아는 사람?","지라시|메모리 반도체 겨울 온다는 외국계 보고서"],
+ ["금융당국 '빅테크 규제', 카카오 하루 -10%","중국 헝다그룹 파산 위기","카카오 골목상권 침해 논란, 상생안 발표","커뮤|카카오 지금이 저점 매수 기회","커뮤|외국인 삼전 연일 순매도, 7만원 깨지나"],
+ ["페이스북 '메타'로 사명 변경, 메타버스 열풍","요소수 대란","코스피 3,000선 등락","커뮤|메타버스 ETF 들어가야 함?","지라시|비트코인 ETF 승인, 1억 간다"],
+ ["한은 기준금리 1.00%","카카오페이 상장","남아공발 오미크론 변이 등장","커뮤|카카오페이 따상 실패했는데 그래도 장기 우상향","커뮤|비트코인 사상 최고가 근처, 지금 들어가도 됨?"],
+ ["카카오페이 경영진 스톡옵션 대량 매도 논란","미 연준 테이퍼링 가속 예고","삼성전자 7만원대 회복","커뮤|카카오 경영진 먹튀하는데 개미만 물림","지라시|LG엔솔 청약 1주라도 받으면 무조건 수익"],
+ ["LG에너지솔루션 상장, 청약 증거금 114조","오스템임플란트 직원 2천억 횡령","코스피 2,600대 추락","커뮤|LG엔솔 따상 실패, 공모주 시대 끝","커뮤|금리 오른다는데 주식 다 팔아야 하나"],
+ ["러시아, 우크라이나 침공","국제유가 100달러 돌파","원자재·방산주 급등","커뮤|전쟁나면 주식 사라는 말 있잖아","지라시|HMM 운임 계속 오른다, 배당 크게 준다"],
+ ["미 연준 3년여 만에 첫 금리 인상","제20대 대통령 선거","코스피 2,750선 회복","커뮤|선거 끝나면 불확실성 해소 랠리","커뮤|카카오 10만원 회복했으니 바닥 확인"],
+ ["중국 상하이 전면 봉쇄","미 나스닥 4월 한 달 -13%","삼성전자 6만전자 진입","커뮤|6만전자는 줍줍 구간","지라시|루나 같은 알고리즘 스테이블코인 수익률 20%"],
+ ["테라·루나 폭락, 일주일 만에 사실상 0원","연준 '빅스텝' 0.5%p 인상","비트코인 4천만원 붕괴","커뮤|코인판 지옥, 루나 물린 사람 단톡방 조용","커뮤|이제 주식도 같이 빠질 듯"],
+ ["미 5월 CPI 8.6%, 41년 만에 최고","연준 '자이언트스텝' 0.75%p","코스피 2,300대, 비트코인 2만 달러 붕괴","커뮤|인버스 사야 하나","커뮤|삼전 5만원대 보고 갈 수도"],
+ ["한은 사상 첫 '빅스텝', 기준금리 2.25%","방산 수출 대형 계약 소식, 방산주 급등","예금 금리 3%대 회복","커뮤|예금이 주식보다 낫다","지라시|폴란드 방산 수출 수십조 규모"],
+ ["파월 잭슨홀 '가계와 기업에 고통 있을 것'","미 증시 급락","원·달러 1,350원 돌파","커뮤|파월 한마디에 계좌 녹음","커뮤|금리 정점 찍으면 반등한다"],
+ ["원·달러 1,400원 돌파","영국 트러스 감세안 쇼크, 파운드화 폭락","코스피 2,155, 연저점","커뮤|개미 곡소리, 주식 앱 지웠다","지라시|레고랜드 채권 문제 터진다"],
+ ["레고랜드 사태로 채권시장 경색","SK C&C 데이터센터 화재, 카카오 서비스 먹통","미 CPI 여전히 8%대","커뮤|카톡 먹통에 카카오 주주도 먹통","커뮤|채권시장 이상하다, 금융위기 오는 거 아님?"],
+ ["FTX 파산, 코인 시장 또 폭락","미 물가 둔화 서프라이즈, 증시 반등","원·달러 1,300원대로 하락","커뮤|코인은 끝났다","커뮤|반도체 업황 바닥이면 지금이 매수 타이밍?"],
+ ["코스피 한 해 -25%, 2,236 마감","삼성전자 5만전자","2차전지 업황 호조, 에코프로 형제 강세","커뮤|주식 다신 안 한다","지라시|내년엔 2차전지만 산다는 큰손 많음"],
+ ["삼성전자 4분기 영업이익 4.3조 '어닝쇼크'","챗GPT 열풍 시작","코스피 2,400선 회복","커뮤|챗GPT 관련주 뭐가 있음?","커뮤|에코프로 10만원 넘었는데 아직 안 늦음?"],
+ ["에코프로 형제 연일 급등","카카오, SM엔터 인수전 참전","미 금리 인상 속도 조절","커뮤|에코프로 안 산 사람 바보","지라시|하이브 vs 카카오 SM 인수전 승자 따라 주가 갈린다"],
+ ["미 실리콘밸리은행(SVB) 파산","카카오, SM 인수 확정","에코프로비엠 20만원 돌파","커뮤|은행 위기? 2차전지는 상관없음","커뮤|공매도 세력이 에코프로 공격 중"],
+ ["삼성전자 메모리 감산 공식화","SG증권발 주가조작 사태, 8개 종목 연속 하한가","2차전지 광풍 계속","커뮤|삼성 감산하면 반도체 바닥 신호","지라시|다른 작전주도 곧 터진다"],
+ ["엔비디아 실적 서프라이즈, AI 반도체 랠리","SK하이닉스 HBM 기대감 폭발","코스피 2,577","커뮤|하이닉스 10만원 넘었다, HBM이 뭐임","커뮤|AI 테마는 거품이다"],
+ ["코스피 2,560선 등락","2차전지 개미 vs 공매도 공방","미 연준 금리 동결","커뮤|에코프로 100만원 간다","지라시|포스코 그룹주 다음 타자"],
+ ["에코프로 장중 150만원 찍고 급락","2차전지 하루 거래대금 사상 최대","포스코홀딩스 등 2차전지 테마 급등락","커뮤|에코프로 안 산 사람이 바보라던 그 달","커뮤|이 장에서 돈 못 벌면 접어야 함"],
+ ["피치, 미국 신용등급 강등","중국 부동산 비구이위안 디폴트 위기","초전도체 테마 광풍과 급락","커뮤|LK-99 테마 들어갔다 물림","지라시|2차전지 다시 간다"],
+ ["미 국채 10년물 4.5% 돌파","고금리 장기화 우려","원·달러 1,350원대","커뮤|금리가 왜 계속 오름","커뮤|카카오 4만원대, 이 가격이면 줍줍?"],
+ ["코스피 2,300 붕괴","카카오 창업자, SM 시세조종 혐의로 금감원 출석","미 국채 10년물 5% 터치","커뮤|카카오 순장조 결성","지라시|정부가 공매도 금지한다"],
+ ["공매도 전면 금지 시행","공매도 금지 첫날 코스피 +5.7%, 2차전지 상한가","미 물가 둔화, 금리 인상 끝 기대","커뮤|공매도 금지했으니 에코프로 다시 간다","커뮤|하루 오르고 다시 빠지는 거 실화냐"],
+ ["연준 내년 금리 인하 시사","산타랠리, 코스피 2,655 마감","비트코인 현물 ETF 승인 기대","커뮤|내년엔 금리 내리니 다 오른다","지라시|금투세 폐지 추진한다"],
+ ["정부, 금투세 폐지 추진 공식화","'기업 밸류업' 프로그램 예고, 저PBR주 급등","미 비트코인 현물 ETF 승인","커뮤|현대차 PBR 0.5배, 밸류업 수혜 1순위","커뮤|삼성 4분기 실적 별로인데 왜 안 빠짐"],
+ ["밸류업 프로그램 세부안 발표","엔비디아 실적 또 서프라이즈","현대차·금융주 급등","커뮤|밸류업 알맹이 없다","지라시|하이닉스 엔비디아에 HBM 독점 공급"],
+ ["SK하이닉스 사상 최고가","삼성전자 8만원대 회복","비트코인 1억원 돌파","커뮤|비트코인 1억, 코인 존버 승리","커뮤|삼성은 HBM 언제 납품함?"],
+ ["제22대 총선","이란-이스라엘 긴장 고조","원·달러 1,400원 터치","커뮤|환율 1,400이면 위기 아님?","지라시|에코프로 다시 갈 거라는 큰손 리포트"],
+ ["엔비디아 시총 3조 달러 근접","삼성 HBM 엔비디아 테스트 통과 지연 보도","코스피 2,630","커뮤|삼성 HBM 언제 됨, 이러다 하이닉스한테 다 뺏김","커뮤|2차전지 끝났다"],
+ ["정부, 동해 심해 가스전 '대왕고래' 발표","SK하이닉스 23만원 돌파","코스피 2,800 근접","커뮤|하이닉스 30만원 간다","지라시|가스공사 상한가, 다음은 석유 관련주"],
+ ["삼성전자 노조 창사 첫 총파업","트럼프 피격, 미 대선 판세 출렁","미 빅테크 AI 거품론에 반도체 급락","커뮤|삼성 8만원대에 산 거 후회 중","커뮤|하이닉스 고점 찍은 듯"],
+ ["8월 5일 '블랙먼데이', 코스피 -8.8% 사상 최대 낙폭","엔캐리 트레이드 청산 공포","다음 날 바로 급반등","커뮤|하루에 계좌 -10% 실화냐","지라시|외국인 삼성 계속 판다, 6만원 깨진다"],
+ ["외국계 '반도체 겨울' 보고서","삼성전자 6만원대 초반 추락, 외국인 연속 매도","미 연준 '빅컷' 0.5%p 금리 인하","커뮤|국장 탈출은 지능순","커뮤|미장으로 다 갈아탐"],
+ ["삼성전자 부회장, 3분기 실적 부진에 이례적 사과문","한은 기준금리 3.25%로 인하","고려아연 경영권 분쟁 주가 폭등","커뮤|5만전자 실화냐","커뮤|한화에어로 30만원대, 방산 너무 오른 거 아님?"],
+ ["트럼프 미 대선 승리","삼성전자 장중 4만9천원 '4만전자', 10조 자사주 매입 발표","금투세 폐지 사실상 확정","커뮤|4만전자 줍줍 vs 아직 바닥 아님","지라시|비트코인 트럼프 당선으로 2억 간다"],
+ ["12월 3일 비상계엄 선포 후 해제, 탄핵 정국","원·달러 1,470원대 급등","코스피 2,400 붕괴 근접","커뮤|국장 진짜 끝났다","커뮤|이럴 때 사는 게 동학개미 아님?"],
+ ["중국 딥시크 쇼크, 엔비디아 하루 -17%","트럼프 2기 취임","방산주 연일 신고가","커뮤|AI 거품 터졌다","지라시|한화에어로 유럽 대형 수주 임박"],
+ ["한화에어로스페이스 59만원, 한 달 +48%","트럼프 관세 위협 본격화","코스피 2,530선","커뮤|방산 이제라도 타야 하나","커뮤|카카오는 언제 오름"],
+ ["공매도 전면 재개","한화에어로 3.6조 유상증자 발표 논란","에코프로비엠 10만원 붕괴","커뮤|공매도 재개, 2차전지 다 죽는다","지라시|4월에 관세 폭탄 터진다"],
+ ["트럼프 상호관세 발표, 코스피 하루 -5%대 폭락","관세 90일 유예에 하루 만에 폭등","헌법재판소 대통령 파면 결정","커뮤|관세 폭락에 손절했는데 다음 날 폭등","커뮤|코스피 2,300 깨지면 다 판다"],
+ ["6월 조기 대선 레이스","'코스피 5000' 공약 등장","원·달러 1,400원 아래로","커뮤|대선 끝나면 국장 랠리?","지라시|상법 개정되면 지주사·저PBR 간다"],
+ ["제21대 대선, 새 정부 출범","코스피 3,000 돌파, 3년 반 만","SK하이닉스 29만원 사상 최고","커뮤|국장 탈출은 지능순이라던 사람들 어디 감","커뮤|카카오 6만원 회복, 순장조 탈출각"],
+ ["상법 개정안 국회 통과","한·미 관세 협상 타결","정부 세제개편안, 대주주 양도세 기준 강화 발표","커뮤|대주주 기준 낮추면 연말에 개미 다 던짐","커뮤|코스피 3,200 너무 빨리 올랐다"],
+ ["대주주 양도세 기준 논란 확산","코스피 3,200선 박스권","하이닉스 실적 사상 최대에도 주가 주춤","커뮤|조정 오면 다 팔고 미장 간다","지라시|정부가 대주주 기준 원래대로 되돌린다"],
+ ["대주주 기준 50억 유지 결정","미 연준 금리 인하 재개","미 조지아 현대차-LG 배터리 공장 단속","커뮤|한화에어로 100만원 돌파, 방산 끝은 어디","커뮤|삼성 8만원대 복귀, 아직 안 늦음?"],
+ ["코스피 사상 첫 4,000 돌파","삼성전자 10만전자, SK하이닉스 50만원 돌파","엔비디아 CEO 방한, 한국 기업과 대규모 AI 협력","커뮤|10만전자 드디어 왔다, 2021년 물린 사람 탈출","지라시|코스피 5,000 연내 간다"],
+ ["AI 버블론 재부상, 코스피 4,000 아래로","비트코인 1억3천만원대로 급락","에코프로비엠 15만원대 반등 후 주춤","커뮤|버블 꺼진다 다 팔아","커뮤|이 정도 조정은 기회"],
+ ["코스피 4,214로 한 해 마감, 연간 +75%","삼성전자 12만원 근접 마감","SK하이닉스 65만원","커뮤|올해 국장 안 한 사람 바보","지라시|내년 코스피 5,000 간다"],
+];
+const END_NAMES = {52:"대왕고래 엔딩",53:"삼성 파업 엔딩",54:"블랙먼데이 엔딩",55:"국장 탈출 엔딩",56:"5만전자 엔딩",57:"4만전자 엔딩",58:"계엄 엔딩",59:"딥시크 엔딩",60:"방산 랠리 엔딩",61:"공매도 재개 엔딩",62:"관세 폭락 엔딩",63:"대선 직전 엔딩",64:"코스피 3000 엔딩",65:"상법 개정 엔딩",66:"대주주 논란 엔딩",67:"10만전자 직전 엔딩",68:"코스피 4000 엔딩",69:"AI 버블 엔딩",70:"코스피 4200 엔딩"};
+const LAST = 70, END_MIN = 52, SEED = 10000000;
+
+let S;
+function fresh(){
+  const q = {}; ASSETS.forEach(a => q[a.id] = 0);
+  const endAt = END_MIN + Math.floor(Math.random() * (LAST - END_MIN + 1));
+  return {i:0, cash:SEED, q, cost:{...q}, trades:[], hist:[], prevTotal:SEED, done:false, endAt};
+}
+const $ = id => document.getElementById(id);
+const won = n => Math.round(n).toLocaleString("ko-KR");
+const man = n => { const v = n/10000; return (Math.abs(v) >= 100 ? Math.round(v).toLocaleString("ko-KR") : v.toFixed(1)) + "만"; };
+const pct = (x, d=1) => (x > 0 ? "+" : "") + (x*100).toFixed(d) + "%";
+const cls = x => x > 0.0005 ? "up" : x < -0.0005 ? "down" : "flat";
+const label = i => { const y = 2020 + Math.floor((i+1)/12), m = (i+1)%12 + 1; return y + "." + String(m).padStart(2,"0"); };
+const px = (a, i) => a.p[i];
+const chg = (arr, i) => i === 0 ? 0 : arr[i]/arr[i-1] - 1;
+const value = i => S.cash + ASSETS.reduce((s,a) => s + S.q[a.id]*px(a,i), 0);
+const fmtPx = (a, i) => a.frac ? man(px(a,i)) : won(px(a,i));
+const fmtQty = (a) => a.frac ? S.q[a.id].toFixed(4) + "개" : won(S.q[a.id]) + "주";
+
+function buy(id, amount){
+  const a = ASSETS.find(x => x.id === id), p = px(a, S.i);
+  amount = Math.min(amount, S.cash);
+  let qty = a.frac ? Math.floor(amount / p * 10000) / 10000 : Math.floor(amount / p);
+  if (qty <= 0) return toast(S.cash < p && !a.frac ? `현금이 1주 가격(${won(p)}원)보다 적어.` : "살 돈이 없어.");
+  const spend = qty * p;
+  S.cash -= spend; S.q[id] += qty; S.cost[id] += spend;
+  S.trades.push({i:S.i, id, side:"buy", qty, p});
+  toast(`${a.name} ${a.frac ? qty.toFixed(4)+"개" : won(qty)+"주"} 매수 · ${won(spend)}원`);
+  render();
+}
+function sell(id, frac){
+  const a = ASSETS.find(x => x.id === id), p = px(a, S.i);
+  let qty = frac === 1 ? S.q[id] : (a.frac ? Math.floor(S.q[id]*frac*10000)/10000 : Math.floor(S.q[id]*frac));
+  if (qty <= 0) return toast("팔 물량이 없어.");
+  const avg = S.cost[id] / S.q[id];
+  S.cash += qty * p; S.cost[id] -= avg * qty; S.q[id] -= qty;
+  if (S.q[id] < 1e-9) { S.q[id] = 0; S.cost[id] = 0; }
+  S.trades.push({i:S.i, id, side:"sell", qty, p, avg});
+  const pnl = (p - avg) * qty;
+  toast(`${a.name} 매도 · 실현손익 ${pnl >= 0 ? "+" : ""}${won(pnl)}원`);
+  render();
+}
+let tt; function toast(m){ $("toast").textContent = m; clearTimeout(tt); tt = setTimeout(() => $("toast").textContent = "", 3500); }
+
+function next(steps){
+  if (S.done) { S = fresh(); $("end").hidden = true; $("play").hidden = false; render(true); window.scrollTo(0,0); return; }
+  for (let k = 0; k < (steps || 1); k++) {
+    S.hist.push({i:S.i, q:{...S.q}, cash:S.cash, total:value(S.i)});
+    S.prevTotal = value(S.i);
+    if (S.i >= S.endAt) { finish(); return; }
+    S.i++;
+    if (S.i >= S.endAt) break;
+  }
+  render(true);
+  window.scrollTo(0,0);
+}
+
+function render(animate){
+  const i = S.i;
+  $("date").innerHTML = label(i) + `<small>${i === 0 ? "시드 1,000만원" : i + "개월째"}</small>`;
+  // tape
+  const items = [{name:"코스피", c:chg(KOSPI,i)}].concat(ASSETS.map(a => ({name:a.name, c:chg(a.p,i), held:S.q[a.id] > 0})));
+  $("tape").innerHTML = items.map(t => `<div class="${t.c > 0.1 ? "hot" : t.c < -0.1 ? "cold" : ""}"><b>${t.held ? "● " : ""}${t.name}</b><span class="num ${cls(t.c)}">${i === 0 ? "—" : pct(t.c)}</span></div>`).join("");
+  // news: 뉴스 3 + 커뮤/지라시 2
+  const n = NEWS[i];
+  const li = n.map((t, k) => {
+    const [kind, body] = t.includes("|") ? t.split("|") : ["뉴스", t];
+    return `<li class="${kind === "뉴스" ? "nw" : "ch"}"><span class="kd">${kind}</span><span>${body}</span></li>`;
+  }).join("");
+  $("news").innerHTML = `<span class="tag">${label(i)} 이번 달 소식</span><ul class="nlist">${li}</ul>`;
+  // feelings: FOMO / relief
+  let feel = "";
+  if (i > 0) {
+    const mv = ASSETS.map(a => ({a, c:chg(a.p,i), held:S.hist[S.hist.length-1].q[a.id] > 0})).sort((x,y) => y.c - x.c);
+    const best = mv[0], worst = mv[mv.length-1];
+    if (best.c > 0.05) feel += best.held ? `<div class="up">🔥 ${best.a.name} ${pct(best.c)}. 들고 있었다. 오늘 치킨은 내가 쏜다.</div>` : `<div class="up">😭 안 산 ${best.a.name} 이번 달 ${pct(best.c)}. 배 아파서 잠이 안 온다.</div>`;
+    if (worst.c < -0.05) feel += worst.held ? `<div class="down">🫠 ${worst.a.name} ${pct(worst.c)}. 내 계좌 얘기다.</div>` : `<div class="down">😮‍💨 ${worst.a.name} ${pct(worst.c)}. 안 사길 진짜 잘했다.</div>`;
+  }
+  if (i >= END_MIN) feel += `<div class="warn">🚨 이제 언제든 장이 끝날 수 있다. 다음 달이 마지막일 수도 있음.</div>`;
+  $("feel").innerHTML = feel;
+  if (animate) { ["news","feel"].forEach(id => { const el = $(id); el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }); }
+  // account
+  const tot = value(i), ret = tot/SEED - 1, mp = i === 0 ? 0 : tot - S.prevTotal;
+  $("total").textContent = won(tot) + "원";
+  $("totalRet").innerHTML = `<span class="${cls(ret)}">${pct(ret)}</span> <span class="flat">시드 대비</span>`;
+  $("mPnl").innerHTML = `<span class="${cls(mp)}">${mp > 0 ? "+" : ""}${won(mp)}원</span>`;
+  $("cash").textContent = won(S.cash) + "원";
+  // rows
+  $("rows").innerHTML = ASSETS.map(a => {
+    const c = chg(a.p,i), q = S.q[a.id], val = q*px(a,i), pnl = val - S.cost[a.id], pr = S.cost[a.id] ? pnl/S.cost[a.id] : 0;
+    const hold = q > 0 ? `${fmtQty(a)} · 평가 ${won(val)}원 · <span class="${cls(pr)}">${pct(pr)}</span>` : "보유 없음";
+    return `<div class="row">
+      <div><div class="nm">${a.name}<small>${a.tag}</small></div><div class="hold num">${hold}</div></div>
+      <div class="px num">${fmtPx(a,i)}<small class="${cls(c)}">${i === 0 ? "시작가" : pct(c)}</small></div>
+      <div class="btns" style="grid-column:1 / -1">
+        <button class="buy" data-b="${a.id}" data-amt="1000000">+100만</button>
+        <button class="buy" data-b="${a.id}" data-amt="all">풀매수</button>
+        <button class="sell" data-s="${a.id}" data-f="0.5" ${q > 0 ? "" : "disabled"}>반 매도</button>
+        <button class="sell" data-s="${a.id}" data-f="1" ${q > 0 ? "" : "disabled"}>전량 매도</button>
+      </div></div>`;
+  }).join("");
+  $("progT").textContent = i >= END_MIN ? `${i}개월째 🚨` : `${i}개월째`;
+  $("progR").innerHTML = `<span class="num ${cls(ret)}">${pct(ret)}</span>`;
+  $("fill").style.width = Math.min(100, i/END_MIN*100) + "%";
+  $("fill").classList.toggle("danger", i >= END_MIN);
+  $("next").textContent = S.i >= S.endAt ? "결과 보기 ▶" : "다음 달 ▶";
+  $("skip").hidden = S.i >= S.endAt;
+  save();
+}
+
+$("rows").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b || b.disabled) return;
+  if (b.dataset.b) buy(b.dataset.b, b.dataset.amt === "all" ? S.cash : +b.dataset.amt);
+  if (b.dataset.s) sell(b.dataset.s, +b.dataset.f);
+});
+$("next").addEventListener("click", () => next(1));
+$("skip").addEventListener("click", () => next(3));
+
+// ===== 칭호 =====
+// 최종 칭호 = [수익률 등급 수식어] + [대표 칭호]. 조합 칭호가 성립하면 대표 칭호를 대신한다.
+// 나머지 성립한 칭호는 뱃지로, 계좌 금액 구간은 칩으로 붙는다. 검수표: games/칭호-검수표.md
+const TIERS = [
+  {max:-0.7, name:"깡통 찬", cond:"수익률 -70% 이하"},
+  {max:-0.3, name:"피눈물 흘리는", cond:"-70% ~ -30%"},
+  {max:0, name:"본전 생각나는", cond:"-30% ~ 0%"},
+  {max:0.5, name:"소소하게 번", cond:"0% ~ +50%"},
+  {max:2, name:"수익 인증하는", cond:"+50% ~ +200%"},
+  {max:5, name:"슈퍼개미급", cond:"+200% ~ +500%"},
+  {max:10, name:"전업 선언한", cond:"+500% ~ +1,000%"},
+  {max:Infinity, name:"여의도 전설", cond:"+1,000% 초과"},
+];
+const CHIPS = [
+  {min:1e9, name:"10억 클럽", cond:"최종 평가금액 10억원 이상"},
+  {min:5e8, name:"5억 클럽", cond:"최종 평가금액 5억원 이상"},
+  {min:1e8, name:"억대 계좌", cond:"최종 평가금액 1억원 이상"},
+];
+// rank: 숫자가 작을수록 대표 칭호 우선순위가 높다
+const TITLES = [
+  {id:"hangang", rank:1, kind:"공통", name:"한강 수온 체크러", roast:"시드 반토막. 한강 물 온도 앱을 켜본 적 있다.", cond:"수익률 -50% 이하", test:c => c.ret <= -0.5},
+  {id:"lastcall", rank:2, kind:"엔딩", name:"엔딩 직격탄", roast:"마지막 달에 풀매수했는데 거기서 장이 끝났다.", cond:"마지막 달 계좌가 -10% 이상 빠짐", test:c => c.lastMonth <= -0.1},
+  {id:"kko_top", rank:3, kind:"카카오", name:"카카오 순장조", roast:"국민주라길래 샀다. 카톡은 매일 쓰는데 계좌는 매일 운다.", cond:"카카오를 14만원 이상에 매수, 또는 끝까지 들고 -30% 이하", test:c => c.buys("kko").some(t => t.p >= 140000) || c.endRet("kko") <= -0.3},
+  {id:"sam_top", rank:4, kind:"삼성전자", name:"9만전자 상투 장인", roast:"'삼전은 10만 간다' 단톡방을 믿었다. 아직 기다리는 중.", cond:"삼성전자를 8만원 이상에 매수하고 손절했거나 끝에 손실", test:c => c.buys("sam").some(t => t.p >= 80000) && (c.endRet("sam") < 0 || c.soldLoss("sam"))},
+  {id:"ebm_top", rank:5, kind:"에코프로비엠", name:"2차전지 불나방", roast:"'안 산 사람이 바보'라는 말을 듣고 꼭대기에 탑승했다.", cond:"에코프로비엠을 30만원 이상에 매수", test:c => c.buys("ebm").some(t => t.p >= 300000)},
+  {id:"hmm_top", rank:6, kind:"HMM", name:"흠슬라 상투 선원", roast:"10배 오른 배에 마지막으로 올라탔다. 배는 이미 출항했다.", cond:"HMM을 4만원 이상에 매수", test:c => c.buys("hmm").some(t => t.p >= 40000)},
+  {id:"hyd_top", rank:7, kind:"현대차", name:"애플카 상투 장인", roast:"애플카 뉴스에 샀다. 애플카는 안 나왔다.", cond:"현대차를 2021년에 23만5천원 이상에 사서 손절", test:c => c.buys("hyd").some(t => t.p >= 235000 && t.i <= 22) && c.soldLoss("hyd")},
+  {id:"btc_top", rank:8, kind:"비트코인", name:"김프 상투단", roast:"김치 프리미엄까지 얹어서 샀다. 김치는 시었다.", cond:"비트코인을 2021년에 7천만원 이상에 사서 손절", test:c => c.buys("btc").some(t => t.p >= 70000000 && t.i <= 22) && c.soldLoss("btc")},
+  {id:"hmm_win", rank:10, kind:"HMM", name:"흠슬라 선장", roast:"3천원대 해운주로 10배 근처를 먹고 내렸다. 진짜 동학개미.", cond:"HMM을 평단 1만원 이하로 사서 3만원 이상에 매도", test:c => c.sells("hmm").some(t => t.p >= 30000 && t.avg <= 10000)},
+  {id:"hyx_win", rank:11, kind:"SK하이닉스", name:"HBM 수혜자", roast:"하이닉스를 끝까지 들고 갔다. 젠슨 황에게 절해야 함.", cond:"하이닉스를 끝까지 들고 +200% 이상", test:c => c.endRet("hyx") >= 2},
+  {id:"hwa_win", rank:12, kind:"한화에어로", name:"K-방산 탑승객", roast:"전쟁 뉴스에 방산을 샀다. 계좌가 미사일처럼 날아갔다.", cond:"한화에어로를 끝까지 들고 +200% 이상, 또는 3배 이상에 매도", test:c => c.endRet("hwa") >= 2 || c.sells("hwa").some(t => t.p >= t.avg*3)},
+  {id:"sam_dip", rank:13, kind:"삼성전자", name:"4만전자 줍줍러", roast:"다들 국장 탈출할 때 삼전을 주웠다. 역발상의 승리.", cond:"2024년 10월 이후 삼성전자를 5만6천원 이하에 사서 끝에 +30% 이상", test:c => c.buys("sam").some(t => t.i >= 56 && t.p <= 56000) && c.endRet("sam") >= 0.3},
+  {id:"sam_hold", rank:14, kind:"삼성전자", name:"10만전자 목격자", roast:"2021년에 산 삼전을 4년 들고 버텨서 기어이 10만원을 봤다.", cond:"2021년에 산 삼성전자를 2025년 10월 이후 엔딩까지 보유", test:c => c.E >= 68 && c.buys("sam").some(t => t.i >= 11 && t.i <= 22) && c.q.sam > 0 && !c.sells("sam").length},
+  {id:"ebm_win", rank:15, kind:"에코프로비엠", name:"에코프로 하차 성공", roast:"광풍에 올라타서 광풍에 내렸다. 타이밍이 예술.", cond:"에코프로비엠을 3배 이상에 매도", test:c => c.sells("ebm").some(t => t.p >= t.avg*3)},
+  {id:"kko_win", rank:16, kind:"카카오", name:"카카오 탈출 성공", roast:"국민주 고점에서 내렸다. 순장조 친구들에게 미안하다.", cond:"카카오를 14만원 이상에 수익 매도", test:c => c.sells("kko").some(t => t.p >= 140000 && t.p > t.avg)},
+  {id:"hyd_win", rank:17, kind:"현대차", name:"밸류업 수혜자", roast:"저PBR이라 샀다. 진짜로 밸류가 업 됐다.", cond:"2024년 이후 산 현대차로 +40% 이상 (매도 또는 보유)", test:c => c.buys("hyd").some(t => t.i >= 47) && (c.endRet("hyd") >= 0.4 || c.sells("hyd").some(t => t.i >= 47 && t.p >= t.avg*1.4))},
+  {id:"hyx_early", rank:18, kind:"SK하이닉스", name:"하닉 조기 하차러", roast:"하이닉스로 조금 벌고 내렸다. 내린 뒤에 세 배가 됐다.", cond:"하이닉스를 판 가격보다 엔딩 가격이 2배 이상", test:c => c.sells("hyx").some(t => c.price("hyx") >= t.p*2)},
+  {id:"hwa_early", rank:19, kind:"한화에어로", name:"방산 하차 후회", roast:"방산 너무 올랐다며 팔았다. 그 뒤로 세 배 더 갔다.", cond:"한화에어로를 판 가격보다 엔딩 가격이 3배 이상", test:c => c.sells("hwa").some(t => c.price("hwa") >= t.p*3)},
+  {id:"inv_timing", rank:20, kind:"KODEX 인버스", name:"폭락 예언자", roast:"장이 끝나는 그 폭락장에 인버스를 들고 있었다.", cond:"엔딩 달 코스피 -3% 이하일 때 인버스 보유", test:c => c.q.inv > 0 && c.kospiLast <= -0.03},
+  {id:"inv_long", rank:21, kind:"KODEX 인버스", name:"인버스 장기투숙객", roast:"1년 넘게 하락에 걸었다. 시장보다 먼저 지쳤다.", cond:"인버스를 12개월 이상 보유", test:c => c.H.filter(h => h.q.inv > 0).length >= 12},
+  {id:"btc_hold", rank:22, kind:"비트코인", name:"코인 존버단", roast:"루나도 FTX도 버텼다. 멘탈은 비트코인보다 단단하다.", cond:"2022년 6월 폭락 때도, 엔딩 때도 비트코인 보유", test:c => c.held("btc", 28) && c.q.btc > 0},
+  {id:"jonber", rank:30, kind:"공통", name:"존버의 신", roast:"첫 달에 사고 앱을 지웠다. 그게 정답이었다.", cond:"첫 달에만 거래하고 수익", test:c => c.T.length > 0 && c.T.every(t => t.i === 0) && c.ret > 0},
+  {id:"danta", rank:31, kind:"공통", name:"단타 중독자", roast:"사고팔기를 멈출 수 없었다. 증권사가 연말 선물 보내줄 듯.", cond:"거래 100회 이상", test:c => c.T.length >= 100},
+  {id:"cash", rank:32, kind:"공통", name:"현금왕 겁쟁이", roast:"대부분의 시간을 현금으로 보냈다. 잃지는 않았다. 벌지도 않았다.", cond:"평균 현금 비중 70% 이상", test:c => c.cashAvg >= 0.7},
+  {id:"general", rank:33, kind:"공통", name:"동학개미 대장군", roast:"폭락장에서 줍고 광풍에서 팔았다. 단톡방 리딩해도 됨.", cond:"수익률 +300% 이상", test:c => c.ret >= 3},
+  {id:"plain_up", rank:90, kind:"기본", name:"평범한 개미", roast:"크게 잃지도 크게 따지도 않았다. 이게 제일 어렵다.", cond:"다른 칭호가 하나도 없을 때", test:() => false},
+];
+const COMBOS = [
+  {need:["kko_top","sam_top"], name:"국민주 2연속 상투 장인", roast:"삼전도 카카오도 꼭대기에서 샀다. 국민주라는 말을 믿은 죄."},
+  {need:["ebm_top","kko_top"], name:"광풍 막차 전문가", roast:"카카오 광풍, 2차전지 광풍, 막차는 다 탔다."},
+  {need:["hyx_win","hwa_win"], name:"반도체·방산 쌍끌이 선장", roast:"2025년 국장의 두 주인공을 다 들고 있었다."},
+  {need:["hmm_win","hwa_win"], name:"텐배거 수집가", roast:"해운으로 한 번, 방산으로 또 한 번. 10배를 두 번 먹었다."},
+  {need:["hmm_win","hyx_win"], name:"텐배거 수집가", roast:"해운으로 한 번, 반도체로 또 한 번. 10배를 두 번 먹었다."},
+  {need:["btc_hold","inv_long"], name:"세상 반대로 사는 사람", roast:"주식은 떨어진다에 걸고 코인은 오른다에 걸었다."},
+  {need:["hyx_early","hwa_early"], name:"조기 하차 2관왕", roast:"하이닉스도 방산도 오르기 직전에 팔았다. 팔면 오르는 손."},
+];
+
+function titles(){
+  const E = S.endAt, fin = value(E), T = S.trades, H = S.hist;
+  const A = id => ASSETS.find(a => a.id === id);
+  const lastH = H[H.length-1], prevH = H[H.length-2];
+  const c = {
+    E, ret: fin/SEED - 1, T, H, q: S.q,
+    price: id => px(A(id), E),
+    held: (id, i) => (H.find(h => h.i === i) || {q:{}}).q[id] > 0,
+    buys: id => T.filter(t => t.side === "buy" && t.id === id),
+    sells: id => T.filter(t => t.side === "sell" && t.id === id),
+    endRet: id => S.q[id] > 0 && S.cost[id] ? (S.q[id]*px(A(id),E))/S.cost[id] - 1 : NaN,
+    soldLoss: id => T.some(t => t.side === "sell" && t.id === id && t.p < t.avg),
+    cashAvg: H.reduce((s,h) => s + h.cash/h.total, 0) / H.length,
+    lastMonth: prevH ? lastH.total/prevH.total - 1 : 0,
+    kospiLast: chg(KOSPI, E),
+  };
+  const got = TITLES.filter(t => t.test(c)).sort((a,b) => a.rank - b.rank);
+  if (!got.length) got.push(TITLES.find(t => t.id === "plain_up"));
+  const ids = got.map(t => t.id);
+  const combo = COMBOS.find(k => k.need.every(id => ids.includes(id)));
+  const main = combo ? {name:combo.name, roast:combo.roast} : got[0];
+  const used = combo ? combo.need : [got[0].id];
+  const badges = got.filter(t => !used.includes(t.id)).map(t => t.name);
+  const tier = TIERS.find(t => c.ret <= t.max).name;
+  const chip = CHIPS.find(k => fin >= k.min);
+  return {ret:c.ret, fin, E, tier, main:main.name, roast:main.roast, full:`${tier} ${main.name}`, badges, chip: chip ? chip.name : ""};
+}
+
+function finish(){
+  S.done = true;
+  const {ret, fin, E, tier, main, roast, full, badges, chip} = titles();
+  const ending = END_NAMES[E] || "장 마감";
+  const bm = [
+    ["그냥 삼성전자 존버", ASSETS[0].p[E]/ASSETS[0].p[0]-1],
+    ["코스피 지수", KOSPI[E]/KOSPI[0]-1],
+    ...ASSETS.map(a => ["최고의 한 종목: " + a.name, a.p[E]/a.p[0]-1]).sort((x,y) => y[1]-x[1]).slice(0,1),
+  ];
+  const text = `나는 [${full}]${chip ? " · " + chip : ""}\n${ending} · 수익률 ${pct(ret)}\n${roast}\n\n${HANDLE} 동학개미 시뮬레이터 #동학개미시뮬레이터\n${GAME_URL}`;
+  const intent = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
+  $("end").innerHTML = `
+    <div class="card" aria-label="결과 카드">
+      <span class="k">🚨 ${label(E)} 장 마감 · ${ending}</span>
+      <div class="tier">${tier}${chip ? ` <em>${chip}</em>` : ""}</div>
+      <div class="title">${main}</div>
+      <div class="roast">${roast}</div>
+      <div class="ret ${ret >= 0 ? "pos" : "neg"}">${pct(ret)}</div>
+      <div class="badges">${badges.map(t => `<span>${t}</span>`).join("")}</div>
+      <div class="foot"><span>2020.02 → ${label(E)} · 시드 1,000만 → <b>${won(fin)}원</b></span><b>${HANDLE}</b></div>
+      <div class="url">${GAME_URL.replace("https://","")} 에서 너도 해봐</div>
+    </div>
+    <div class="share">
+      <a href="${intent}" target="_blank" rel="noopener">X에 결과 올리기</a>
+      <button id="copy">결과 텍스트 복사</button>
+    </div>
+    <a class="follow" href="https://x.com/intent/follow?screen_name=${HANDLE.slice(1)}" target="_blank" rel="noopener">다음 시즌 서학개미 시뮬레이터 알림 받기 · ${HANDLE} 팔로우</a>
+    <div class="note">카드를 캡처해서 같이 올리면 더 잘 퍼져. 다시 하면 마감 날짜가 바뀐다. 같은 기간 다른 선택은 이랬어:</div>
+    <div class="bench">${bm.map(b => `<div><span>${b[0]}</span><span class="num ${cls(b[1])}">${pct(b[1])}</span></div>`).join("")}<div><span>나</span><span class="num ${cls(ret)}">${pct(ret)}</span></div></div>
+    <div class="note">가격: 월말 종가(분할·무상증자 반영 수정주가), Yahoo Finance · 비트코인 업비트 원화 시세. 수수료·세금·배당 미반영. 커뮤·지라시 줄은 그 시절 분위기를 재현한 창작이다. 실제 과거 데이터로 만든 게임이며 투자 권유가 아니다.</div>`;
+  $("end").hidden = false; $("play").hidden = true;
+  $("copy").addEventListener("click", () => {
+    navigator.clipboard.writeText(text).then(() => toastEnd("복사했어. X에 붙여넣으면 돼."), () => toastEnd("복사가 막혔어. 텍스트를 직접 선택해서 복사해줘."));
+  });
+  $("next").textContent = "다시 하기 ↺"; $("skip").hidden = true;
+  $("progT").textContent = `${label(E)} 장 마감`; $("fill").style.width = "100%";
+  window.scrollTo(0,0); save();
+}
+function toastEnd(m){ const n = document.querySelector("#end .note"); if (n) n.textContent = m; }
+
+function save(){ try { localStorage.setItem("dongak-s2", JSON.stringify(S)); } catch(e){} }
+function load(){ try { const s = JSON.parse(localStorage.getItem("dongak-s2")); if (s && typeof s.i === "number" && s.q && typeof s.endAt === "number") return s; } catch(e){} return null; }
+
+S = load() || fresh();
+if (S.done) { render(); finish(); } else render();
+</script>
+</body>
+</html>
