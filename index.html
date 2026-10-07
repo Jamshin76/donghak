@@ -639,13 +639,13 @@ async function finish(){
   const intent = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
   $("end").innerHTML = `
     <a class="cardlink" href="${PROFILE}" target="_blank" rel="noopener" title="${MAKER} X 홈"><img class="cardimg" id="cardImg" alt="결과 카드: ${full}, 수익률 ${pct(ret)}"></a>
-    <button class="shareMain" id="shareAll">📤 결과 공유하기 (카톡·인스타·커뮤)</button>
+    <button class="shareMain" id="shareAll">📤 결과 공유하기 (카톡·문자·커뮤)</button>
     <div class="steps">
       <button class="save" id="saveCard">💾 카드 저장</button>
-      <a class="post" href="${intent}" target="_blank" rel="noopener">𝕏 X에 올리기</a>
+      <a class="post" id="postX" href="${intent}" target="_blank" rel="noopener">𝕏 X에 올리기</a>
       <button class="copy" id="copyLink">🔗 링크 복사</button>
     </div>
-    <div class="note" id="endNote">공유하기를 누르면 카드 사진이랑 게임 링크가 같이 나가. X에 올릴 땐 카드를 저장해서 사진으로 붙여줘.</div>
+    <div class="note" id="endNote">공유하기는 결과 문구랑 게임 링크가 나가. 카드 사진은 저장해서 같이 붙이면 더 좋아.</div>
     <div class="share">
       <a class="follow" href="https://x.com/intent/follow?screen_name=${HANDLE.slice(1)}" target="_blank" rel="noopener">다음 시즌 알림 받기 · ${MAKER} 팔로우</a>
     </div>
@@ -669,15 +669,20 @@ async function finish(){
     const ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();
     const ok = document.execCommand && document.execCommand("copy"); ta.remove(); if (!ok) throw 0;
   });
+  // 카톡은 사진을 같이 보내면 글이 빠진다. 그래서 글+링크만 보낸다(링크 미리보기 포스터가 붙음).
   $("shareAll").addEventListener("click", async () => {
-    try {
-      const file = await cardFile();
-      if (navigator.canShare && navigator.canShare({files:[file]})) { await navigator.share({files:[file], title:"동학개미 시뮬레이터", text:dare}); return; }
-      if (navigator.share) { await navigator.share({title:"동학개미 시뮬레이터", text:dare.replace(`\n👉 ${GAME_URL}`, ""), url:GAME_URL}); return; }
-    } catch(e){ if (e && e.name === "AbortError") return; }
-    // PC 등 공유창이 없는 곳: 카드 저장 + 도전장 문구 복사
-    download();
-    copyText(dare).then(() => toastEnd("카드 저장하고 도전장 문구도 복사했어. 카톡·커뮤에 붙여넣고 사진 첨부하면 끝!"), () => toastEnd("카드는 저장했어. 링크는 " + GAME_URL + " 붙여주면 돼."));
+    try { if (navigator.share) { await navigator.share({text:dare}); return; } } catch(e){ if (e && e.name === "AbortError") return; }
+    copyText(dare).then(() => toastEnd("공유창이 없어서 문구를 복사했어. 카톡·커뮤에 붙여넣으면 돼."), () => toastEnd("주소는 " + GAME_URL));
+  });
+  // 폰에서는 X 앱 글쓰기 창으로 먼저 연다. 앱이 없으면 웹 X로 넘어간다.
+  $("postX").addEventListener("click", ev => {
+    if (!/Android|iPhone|iPad/i.test(navigator.userAgent)) return;
+    ev.preventDefault();
+    let left = false; const onHide = () => { if (document.hidden) left = true; };
+    document.addEventListener("visibilitychange", onHide);
+    location.href = "twitter://post?message=" + encodeURIComponent(text);
+    setTimeout(() => { document.removeEventListener("visibilitychange", onHide); if (!left && !document.hidden) location.href = intent; }, 1500);
+    toastEnd("X 앱 글쓰기 창에서 저장한 카드를 사진으로 붙여줘.");
   });
   $("saveCard").addEventListener("click", async () => {
     try {
