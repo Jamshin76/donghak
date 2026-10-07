@@ -125,8 +125,8 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .tmaker b{color:var(--fg)}
 .cardlink{display:flex;justify-content:center}
 .cardimg{width:100%;max-width:540px;align-self:center;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.25);background:#0f121a;min-height:200px}
-.shareMain{font-size:17px;font-weight:800;padding:16px 10px;border-radius:12px;border:0;background:var(--accent);color:var(--accentfg);min-height:56px;cursor:pointer}
-.steps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.shareMain{font-size:18px;font-weight:800;padding:16px 10px;border-radius:12px;border:0;background:var(--accent);color:var(--accentfg);min-height:56px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.steps{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .steps .save,.steps .post,.steps .copy{font-size:14px;font-weight:700;padding:12px 6px;border-radius:10px;text-align:center;text-decoration:none;min-height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .steps .save,.steps .copy{background:var(--panel);color:var(--fg);border:1px solid var(--line)}
 .steps .post{background:var(--fg);color:var(--bg);border:0}
@@ -639,13 +639,12 @@ async function finish(){
   const intent = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
   $("end").innerHTML = `
     <a class="cardlink" href="${PROFILE}" target="_blank" rel="noopener" title="${MAKER} X 홈"><img class="cardimg" id="cardImg" alt="결과 카드: ${full}, 수익률 ${pct(ret)}"></a>
-    <button class="shareMain" id="shareAll">📤 결과 공유하기 (카톡·문자·커뮤)</button>
+    <a class="shareMain" id="postX" href="${intent}" target="_blank" rel="noopener">𝕏 X에 결과 올리기</a>
     <div class="steps">
       <button class="save" id="saveCard">💾 카드 저장</button>
-      <a class="post" id="postX" href="${intent}" target="_blank" rel="noopener">𝕏 X에 올리기</a>
       <button class="copy" id="copyLink">🔗 링크 복사</button>
     </div>
-    <div class="note" id="endNote">공유하기는 결과 문구랑 게임 링크가 나가. 카드 사진은 저장해서 같이 붙이면 더 좋아.</div>
+    <div class="note" id="endNote">카드를 저장해서 X 글쓰기 창에 사진으로 붙여줘. 카톡·커뮤엔 링크 복사해서 카드 사진이랑 같이 붙이면 돼.</div>
     <div class="share">
       <a class="follow" href="https://x.com/intent/follow?screen_name=${HANDLE.slice(1)}" target="_blank" rel="noopener">다음 시즌 알림 받기 · ${MAKER} 팔로우</a>
     </div>
@@ -668,11 +667,6 @@ async function finish(){
   const copyText = t => (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).catch(() => {
     const ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();
     const ok = document.execCommand && document.execCommand("copy"); ta.remove(); if (!ok) throw 0;
-  });
-  // 카톡은 사진을 같이 보내면 글이 빠진다. 그래서 글+링크만 보낸다(링크 미리보기 포스터가 붙음).
-  $("shareAll").addEventListener("click", async () => {
-    try { if (navigator.share) { await navigator.share({text:dare}); return; } } catch(e){ if (e && e.name === "AbortError") return; }
-    copyText(dare).then(() => toastEnd("공유창이 없어서 문구를 복사했어. 카톡·커뮤에 붙여넣으면 돼."), () => toastEnd("주소는 " + GAME_URL));
   });
   // 폰에서는 X 앱 글쓰기 창으로 먼저 연다. 앱이 없으면 웹 X로 넘어간다.
   $("postX").addEventListener("click", ev => {
