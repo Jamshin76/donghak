@@ -739,6 +739,12 @@ if (INAPP && !S.done && S.i === 0) {
   if (/KAKAOTALK/i.test(navigator.userAgent)) location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href);
   else if (IS_AND) location.href = `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(location.href)};end`;
 }
+// 아이폰 인스타·페북 등은 밖으로 강제로 못 빼서 안내만 띄운다
+if (INAPP && IS_IOS && !/KAKAOTALK/i.test(navigator.userAgent)) {
+  const n = document.createElement("div"); n.className = "intro";
+  n.textContent = "앱 안 브라우저에선 카드 복사가 안 될 수 있어. 오른쪽 위 ··· → '외부 브라우저에서 열기'로 사파리에서 해줘!";
+  $("app").prepend(n);
+}
 if (S.done) { render(); finish(); } else render();
 // ===== 첫 방문 튜토리얼 =====
 function tut(show){ $("tut").hidden = !show; $("tp1").hidden = false; $("tp2").hidden = true; if (show) $("tutNext").focus(); }
