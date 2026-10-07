@@ -642,9 +642,9 @@ async function finish(){
     <a class="shareMain" id="postX" href="${intent}" target="_blank" rel="noopener">𝕏 X에 결과 올리기</a>
     <div class="steps">
       <button class="save" id="saveCard">💾 카드 저장</button>
-      <button class="copy" id="copyLink">💬 카드+글 보내기</button>
+      <button class="copy" id="copyLink">📋 글+링크 복사</button>
     </div>
-    <div class="note" id="endNote">X에 올리기를 누르면 글이 채워진 X 글쓰기 창이 열려. 카드 사진만 붙이면 끝. 카톡·커뮤엔 카드+글 보내기: 카드가 가고, 글은 복사돼 있으니 붙여넣기만 하면 돼.</div>
+    <div class="note" id="endNote">X에 올리기를 누르면 글이 채워진 X 글쓰기 창이 열려. 카드 사진만 붙이면 끝. 카톡·커뮤엔 카드 저장해서 사진으로, 글+링크 복사해서 붙여넣으면 돼.</div>
     <div class="share">
       <a class="follow" href="https://x.com/intent/follow?screen_name=${HANDLE.slice(1)}" target="_blank" rel="noopener">다음 시즌 알림 받기 · ${MAKER} 팔로우</a>
     </div>
@@ -695,18 +695,8 @@ async function finish(){
     download();
     toastEnd("저장했어. 안 보이면 카드를 길게 눌러 저장해줘.");
   });
-  // 카드+글 보내기: 글+링크는 클립보드로, 카드는 공유창으로. 카톡은 사진을 받으면 글을 버려서 둘을 나눠 보낸다.
   $("copyLink").addEventListener("click", () => {
-    const copied = copyText(dare);  // 공유창이 탭 직후에 떠야 해서 복사를 기다리지 않는다
-    if (readyFile && navigator.canShare && navigator.canShare({files:[readyFile]})) {
-      navigator.share({files:[readyFile]}).catch(() => {});
-      copied.then(() => toastEnd("글+링크는 복사해뒀어. 카드 보낸 채팅창에 붙여넣기만 하면 끝!"), () => toastEnd("카드는 보냈는데 복사가 막혔어. 주소는 " + GAME_URL));
-      return;
-    }
-    // 공유창이 없는 곳(PC, 앱 안 브라우저 등): 카드 저장 + 글 복사
-    download();
-    const why = (IS_AND || IS_IOS) ? "지금 브라우저는 공유창이 없어서 " : "";
-    copied.then(() => toastEnd(why + "카드 저장하고 글+링크도 복사했어. 붙여넣고 카드 사진 첨부하면 끝!" + (why ? " 크롬·사파리에서 열면 공유창으로 바로 보낼 수 있어." : "")), () => toastEnd("카드는 저장했어. 주소는 " + GAME_URL));
+    copyText(dare).then(() => toastEnd("복사 완료! 카톡·커뮤에 붙여넣고, 카드 사진도 같이 보내면 더 좋아."), () => toastEnd("복사가 막혔어. 주소는 " + GAME_URL));
   });
 }
 // ===== 폰에서는 X 링크를 X 앱으로 연다 (이미 로그인된 앱을 쓰게) =====
