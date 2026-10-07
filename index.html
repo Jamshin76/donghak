@@ -126,7 +126,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .cardlink{display:flex;justify-content:center}
 .cardimg{width:100%;max-width:540px;align-self:center;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.25);background:#0f121a;min-height:200px}
 .shareMain{font-size:18px;font-weight:800;padding:16px 10px;border-radius:12px;border:0;background:var(--accent);color:var(--accentfg);min-height:56px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
-.steps{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.steps{display:grid;grid-template-columns:1fr;gap:8px}
 .steps .save,.steps .post,.steps .copy{font-size:14px;font-weight:700;padding:12px 6px;border-radius:10px;text-align:center;text-decoration:none;min-height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .steps .save,.steps .copy{background:var(--panel);color:var(--fg);border:1px solid var(--line)}
 .steps .post{background:var(--fg);color:var(--bg);border:0}
@@ -644,10 +644,9 @@ async function finish(){
     <a class="cardlink" href="${PROFILE}" target="_blank" rel="noopener" title="${MAKER} X 홈"><img class="cardimg" id="cardImg" alt="결과 카드: ${full}, 수익률 ${pct(ret)}"></a>
     <a class="shareMain" id="postX" href="${intent}" target="_blank" rel="noopener">𝕏 X에 결과 올리기</a>
     <div class="steps">
-      <button class="save" id="saveCard">💾 카드 저장</button>
       <button class="copy" id="copyLink">📋 글+링크 복사</button>
     </div>
-    <div class="note" id="endNote">올리는 링크엔 내 칭호 이미지가 미리보기로 붙어서 글만 올려도 돼. 카톡·커뮤엔 글+링크 복사해서 붙여넣으면 끝. 상세 카드는 저장해서 따로 올려도 좋아.</div>
+    <div class="note" id="endNote">올리는 링크엔 내 칭호 이미지가 미리보기로 붙어. 카톡·커뮤엔 글+링크 복사해서 붙여넣으면 끝.</div>
     <div class="share">
       <a class="follow" href="https://x.com/intent/follow?screen_name=${HANDLE.slice(1)}" target="_blank" rel="noopener">다음 시즌 알림 받기 · ${MAKER} 팔로우</a>
     </div>
@@ -662,24 +661,12 @@ async function finish(){
   const cv = await drawCard(r);
   const url = cv.toDataURL("image/png");
   $("cardImg").src = url;
-  const name = `동학개미_${main.replace(/\s/g,"")}.png`;
-  const cardFile = async () => new File([await new Promise(res => cv.toBlob(res, "image/png"))], name, {type:"image/png"});
-  const download = () => { const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); };
-  // 링크는 게임 주소로 바로. 아돈노미 X는 카드·사이트 곳곳의 크레딧으로 연결된다.
   const dare = `나 동학개미 시뮬레이터에서 [${full}] 받음. 수익률 ${pct(ret)} ㅋㅋ\n2020년 코로나 폭락장부터 1,000만원 굴려보기. 너는 몇 등급 나오냐?\n👉 ${shareURL}`;
   const copyText = t => (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).catch(() => {
     const ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();
     const ok = document.execCommand && document.execCommand("copy"); ta.remove(); if (!ok) throw 0;
   });
   // X에 결과 올리기: 전역 X 링크 처리(폰은 X 앱 글쓰기)로 글+내 결과 링크만 넘긴다. 링크 미리보기에 칭호 이미지가 붙는다.
-  $("saveCard").addEventListener("click", async () => {
-    try {
-      const file = await cardFile();
-      if (navigator.canShare && navigator.canShare({files:[file]}) && (IS_AND || IS_IOS)) { await navigator.share({files:[file]}); return; }
-    } catch(e){ if (e && e.name === "AbortError") return; }
-    download();
-    toastEnd("저장했어. 안 보이면 카드를 길게 눌러 저장해줘.");
-  });
   $("copyLink").addEventListener("click", () => {
     copyText(dare).then(() => toastEnd("복사 완료! 붙여넣으면 링크 미리보기에 내 칭호 이미지가 같이 떠."), () => toastEnd("복사가 막혔어. 주소는 " + GAME_URL));
   });
