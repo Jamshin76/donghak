@@ -368,7 +368,7 @@ function sell(id, frac){
 let tt; function toast(m){ $("toast").textContent = m; clearTimeout(tt); tt = setTimeout(() => $("toast").textContent = "", 3500); }
 
 function next(steps){
-  if (S.done) { S = fresh(); $("end").hidden = true; $("play").hidden = false; $("tape").hidden = false; $("help").hidden = false; render(true); window.scrollTo(0,0); return; }
+  if (S.done) { S = fresh(); $("end").hidden = true; $("play").hidden = false; $("tape").hidden = false; $("help").hidden = false; render(true); window.scrollTo(0,0); tut(true); return; }
   for (let k = 0; k < (steps || 1); k++) {
     S.hist.push({i:S.i, q:{...S.q}, cash:S.cash, total:value(S.i)});
     S.prevTotal = value(S.i);
