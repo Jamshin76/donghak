@@ -9,7 +9,7 @@
 <meta property="og:url" content="https://jamshin76.github.io/donghak/">
 <meta property="og:title" content="동학개미 시뮬레이터">
 <meta property="og:description" content="2020년 코로나 폭락장, 시드 1,000만원. 장은 언제 끝날지 모른다. 너의 칭호는?">
-<meta property="og:image" content="https://jamshin76.github.io/donghak/og.png">
+<meta property="og:image" content="https://jamshin76.github.io/donghak/og-v2.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -17,7 +17,7 @@
 <meta name="twitter:creator" content="@DONTTknow_me">
 <meta name="twitter:title" content="동학개미 시뮬레이터">
 <meta name="twitter:description" content="2020년 코로나 폭락장, 시드 1,000만원. 장은 언제 끝날지 모른다. 너의 칭호는?">
-<meta name="twitter:image" content="https://jamshin76.github.io/donghak/og.png">
+<meta name="twitter:image" content="https://jamshin76.github.io/donghak/og-v2.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
@@ -112,6 +112,26 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .tut ol b{color:var(--up)}
 .tut .go{font-family:var(--display);font-weight:400;font-size:20px;background:var(--accent);color:var(--accentfg);border:0;border-radius:10px;min-height:48px}
 .help{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:5;width:40px;height:40px;border-radius:50%;padding:0;font-size:18px}
+.credit{display:inline-block;margin-top:8px;font-size:13px;color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--muted)}
+.credit b{color:var(--fg)}
+.tut ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:10px;font-size:15px;line-height:1.55}
+.tut ul b{color:var(--up)}
+.tut h3{text-wrap:balance}
+.tnav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:4px}
+.tnav .go{flex:1;max-width:200px}
+.dots{display:flex;gap:6px}.dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}.dots i.on{background:var(--up)}
+.pg{display:flex;flex-direction:column;gap:14px}
+.tmaker{font-size:12px;color:var(--muted);text-align:center;text-decoration:none}
+.tmaker b{color:var(--fg)}
+.cardimg{width:100%;max-width:540px;align-self:center;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.25);background:#0f121a;min-height:200px}
+.steps{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.steps .save,.steps .post{font-size:15px;font-weight:700;padding:14px 10px;border-radius:10px;text-align:center;text-decoration:none;min-height:50px}
+.steps .save{background:var(--accent);color:var(--accentfg);border:0}
+.steps .post{background:var(--fg);color:var(--bg)}
+.share .follow{flex:1;min-width:140px}
+.maker{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 16px;border-radius:10px;background:var(--panel);border:1px solid var(--line);color:var(--fg);text-decoration:none;font-size:14px}
+.maker span:last-child{color:var(--up);font-weight:700}
+@media (max-width:420px){.steps{grid-template-columns:1fr}}
 .toast{min-height:20px;font-size:13px;color:var(--muted)}
 .end{display:flex;flex-direction:column;gap:14px}
 .card{background:#10131b;color:#f3f4f8;border-radius:14px;padding:26px 22px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden}
@@ -145,6 +165,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
   <header>
     <div>
       <h1>동학개미 <em>시뮬레이터</em></h1>
+      <a class="credit" href="https://x.com/DONTTknow_me" target="_blank" rel="noopener">made by <b>아돈노미</b> from X</a>
       <div class="season">2020.02 코로나 폭락장 출발 · 장 마감은 2024.06~2025.12 중 어느 달 (안 알려줌)</div>
     </div>
     <div class="date" id="date">2020.02<small>시드 1,000만원</small></div>
@@ -185,14 +206,25 @@ button:disabled{opacity:.35;cursor:not-allowed}
 
 <div class="tut" id="tut" hidden role="dialog" aria-modal="true" aria-labelledby="tutT">
   <div class="box">
-    <h3 id="tutT">동학개미 <em>시뮬레이터</em></h3>
-    <ol>
-      <li>2020년 2월 코로나 폭락장, 시드 <b>1,000만원</b>으로 시작</li>
-      <li>이번 달 뉴스 보고 사고팔고 <b>다음 달 ▶</b></li>
-      <li>장은 2024.06~2025.12 중 <b>아무 때나 갑자기</b> 끝남</li>
-      <li>끝나면 칭호 받고 X에 인증</li>
-    </ol>
-    <button class="go" id="tutGo">ㄱㄱ 시작</button>
+    <div class="pg" id="tp1">
+      <h3 id="tutT">반가워요! 👋<br>동학개미 <em>시뮬레이터</em>예요</h3>
+      <ul>
+        <li>2020년 2월 <b>코로나 폭락장</b>부터 시드 <b>1,000만원</b>으로 한 달씩 투자해 봐요.</li>
+        <li>사고파는 가격은 그 달 <b>실제 월말 종가</b>예요.</li>
+        <li>결과를 기억해서 하기보다, 매달 나오는 <b>헤드라인 5개</b>를 보고 판단해 보세요. 뉴스 3개에 커뮤·지라시 2개인데, 지라시는 믿을지 말지 알아서!</li>
+      </ul>
+      <div class="tnav"><span class="dots"><i class="on"></i><i></i></span><button class="go" id="tutNext">다음 ▶</button></div>
+    </div>
+    <div class="pg" id="tp2" hidden>
+      <h3>⚠️ 장은 언제 끝날지 몰라요</h3>
+      <ul>
+        <li><b>2024년 6월부터 아무 달에나</b> 갑자기 장이 끝나요. 무지성 한 종목 몰빵은 위험해요.</li>
+        <li>끝나면 결과에 따라 <b>칭호가 조합된 카드</b>를 받아요. 깡통 찬 OOO부터 여의도 전설까지.</li>
+        <li>카드를 저장해서 X에 공유하고 친구한테도 뿌려 보세요. <b>동학개미의 왕은 누구?!</b></li>
+      </ul>
+      <div class="tnav"><span class="dots"><i></i><i class="on"></i></span><button class="go" id="tutGo">ㄱㄱ 시작</button></div>
+    </div>
+    <a class="tmaker" href="https://x.com/DONTTknow_me" target="_blank" rel="noopener">made by <b>아돈노미</b> from X · @DONTTknow_me</a>
   </div>
 </div>
 <button class="help" id="help" aria-label="게임 방법 보기">?</button>
@@ -334,7 +366,7 @@ function sell(id, frac){
 let tt; function toast(m){ $("toast").textContent = m; clearTimeout(tt); tt = setTimeout(() => $("toast").textContent = "", 3500); }
 
 function next(steps){
-  if (S.done) { S = fresh(); $("end").hidden = true; $("play").hidden = false; render(true); window.scrollTo(0,0); return; }
+  if (S.done) { S = fresh(); $("end").hidden = true; $("play").hidden = false; $("tape").hidden = false; render(true); window.scrollTo(0,0); return; }
   for (let k = 0; k < (steps || 1); k++) {
     S.hist.push({i:S.i, q:{...S.q}, cash:S.cash, total:value(S.i)});
     S.prevTotal = value(S.i);
@@ -492,45 +524,131 @@ function titles(){
   return {ret:c.ret, fin, E, tier, main:main.name, roast:main.roast, full:`${tier} ${main.name}`, badges, chip: chip ? chip.name : ""};
 }
 
-function finish(){
+// ===== 결과 카드 (캔버스로 그려서 화면 표시 = 저장 이미지) =====
+const MAKER = "아돈노미", PROFILE = "https://x.com/" + HANDLE.slice(1);
+function wrapLines(ctx, text, maxW){
+  const words = text.split(" "), lines = []; let cur = "";
+  for (const w of words) {
+    const t = cur ? cur + " " + w : w;
+    if (ctx.measureText(t).width <= maxW || !cur) cur = t; else { lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  // 한 단어가 너무 길면 글자 단위로 자른다
+  return lines.flatMap(l => { if (ctx.measureText(l).width <= maxW) return [l]; const out = []; let c = ""; for (const ch of l) { if (ctx.measureText(c + ch).width > maxW && c) { out.push(c); c = ch; } else c += ch; } if (c) out.push(c); return out; });
+}
+function pill(ctx, x, y, text, size, fg, stroke){
+  ctx.font = `600 ${size}px "IBM Plex Sans KR", sans-serif`;
+  const w = ctx.measureText(text).width + size*1.2, h = size*1.7;
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, h/2); ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = fg; ctx.textBaseline = "middle"; ctx.fillText(text, x + size*0.6, y + h/2 + 1); ctx.textBaseline = "alphabetic";
+  return w;
+}
+async function drawCard(r){
+  try { await Promise.all(['400 100px "Black Han Sans"','700 40px "IBM Plex Sans KR"','400 40px "IBM Plex Sans KR"','600 40px "IBM Plex Mono"'].map(f => document.fonts.load(f, "가A1"))); } catch(e){}
+  const W = 1080, P = 70, maxW = W - P*2;
+  const BH = '"Black Han Sans","IBM Plex Sans KR",sans-serif', SANS = '"IBM Plex Sans KR",sans-serif', MONO = '"IBM Plex Mono",monospace';
+  const m = document.createElement("canvas").getContext("2d");
+  // 제목 크기: 2줄 안에 들어가게
+  let ts = 124; m.font = `400 ${ts}px ${BH}`;
+  while (wrapLines(m, r.main, maxW).length > 2 && ts > 84) { ts -= 8; m.font = `400 ${ts}px ${BH}`; }
+  const tLines = wrapLines(m, r.main, maxW);
+  m.font = `400 36px ${SANS}`; const rLines = wrapLines(m, r.roast, maxW).slice(0, 3);
+  const topH = 210 + tLines.length*ts*1.08 + 30 + rLines.length*50 + 200 + (r.badges.length ? 80 : 0);
+  const H = Math.round(topH + 400);
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d");
+  // 배경
+  ctx.fillStyle = "#0f121a"; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "#ffcc1a"; ctx.fillRect(0, 0, W, 16);
+  // 상단 메인
+  let y = 104;
+  ctx.fillStyle = "#ffcc1a"; ctx.font = `700 34px ${SANS}`; ctx.fillText(`${label(r.E)} 장 마감 · ${r.ending}`, P, y);
+  ctx.fillStyle = "#ff5468"; ctx.font = `700 26px ${SANS}`; ctx.textAlign = "right"; ctx.fillText("동학개미 시뮬레이터", W - P, y); ctx.textAlign = "left";
+  y += 82;
+  ctx.fillStyle = "#ffcc1a"; ctx.font = `700 50px ${SANS}`; ctx.fillText(r.tier, P, y);
+  if (r.chip) { const tw = ctx.measureText(r.tier).width; pill(ctx, P + tw + 20, y - 40, r.chip, 26, "#ffcc1a", "#ffcc1a"); }
+  y += 24;
+  ctx.fillStyle = "#ffffff"; ctx.font = `400 ${ts}px ${BH}`;
+  for (const l of tLines) { y += ts*1.04; ctx.fillText(l, P, y); }
+  y += 56;
+  ctx.fillStyle = "#c6cbd8"; ctx.font = `400 36px ${SANS}`;
+  for (const l of rLines) { ctx.fillText(l, P, y); y += 50; }
+  y += 140;
+  ctx.fillStyle = r.ret >= 0 ? "#ff5468" : "#5b95ff"; ctx.font = `600 150px ${MONO}`; ctx.fillText(pct(r.ret), P - 6, y);
+  y += 36;
+  if (r.badges.length) { let x = P; for (const b of r.badges.slice(0, 4)) { m.font = `600 26px ${SANS}`; const w = m.measureText(b).width + 32; if (x + w > W - P) break; x += pill(ctx, x, y, b, 26, "#dfe3ee", "#3a4260") + 12; } }
+  // 하단 정보 띠
+  const by = Math.round(topH);
+  ctx.fillStyle = "#1a1f2c"; ctx.fillRect(0, by, W, H - by);
+  ctx.fillStyle = "#2a3044"; ctx.fillRect(0, by, W, 2);
+  let yy = by + 70;
+  ctx.fillStyle = "#ffffff"; ctx.font = `700 34px ${SANS}`; ctx.fillText(`2020.02 → ${label(r.E)}  ·  1,000만 → ${won(r.fin)}원`, P, yy);
+  yy += 56; ctx.font = `400 28px ${SANS}`; let x = P;
+  for (const [k, v] of [["같은 기간 삼전 존버", r.bm[0][1]], ["코스피", r.bm[1][1]]]) {
+    ctx.fillStyle = "#98a1b5"; ctx.fillText(k + " ", x, yy); x += ctx.measureText(k + " ").width;
+    ctx.fillStyle = v >= 0 ? "#ff5468" : "#5b95ff"; ctx.font = `600 28px ${MONO}`; ctx.fillText(pct(v), x, yy); x += ctx.measureText(pct(v)).width + 36; ctx.font = `400 28px ${SANS}`;
+  }
+  yy += 44; ctx.fillStyle = "#2a3044"; ctx.fillRect(P, yy, maxW, 2);
+  yy += 78;
+  ctx.fillStyle = "#ffffff"; ctx.font = `400 46px ${BH}`; ctx.fillText("동학개미 시뮬레이터", P, yy);
+  ctx.textAlign = "right"; ctx.font = `700 32px ${SANS}`; ctx.fillText(`made by ${MAKER}`, W - P, yy - 6);
+  yy += 50;
+  ctx.textAlign = "left"; ctx.fillStyle = "#ffcc1a"; ctx.font = `600 28px ${MONO}`; ctx.fillText(GAME_URL.replace("https://","").replace(/\/$/,""), P, yy);
+  ctx.textAlign = "right"; ctx.fillStyle = "#98a1b5"; ctx.font = `400 28px ${SANS}`; ctx.fillText(`from X ${HANDLE}`, W - P, yy);
+  ctx.textAlign = "left";
+  yy += 52; ctx.fillStyle = "#6b7389"; ctx.font = `400 22px ${SANS}`; ctx.fillText("실제 과거 월말 종가로 만든 게임 · 투자 권유 아님", P, yy);
+  return cv;
+}
+
+async function finish(){
   S.done = true;
-  const {ret, fin, E, tier, main, roast, full, badges, chip} = titles();
-  const ending = END_NAMES[E] || "장 마감";
-  const bm = [
+  const r = titles();
+  const {ret, fin, E, tier, main, roast, full, badges, chip} = r;
+  r.ending = END_NAMES[E] || "장 마감";
+  r.bm = [
     ["그냥 삼성전자 존버", ASSETS[0].p[E]/ASSETS[0].p[0]-1],
     ["코스피 지수", KOSPI[E]/KOSPI[0]-1],
     ...ASSETS.map(a => ["최고의 한 종목: " + a.name, a.p[E]/a.p[0]-1]).sort((x,y) => y[1]-x[1]).slice(0,1),
   ];
-  const text = `나는 [${full}]${chip ? " · " + chip : ""}\n${ending} · 수익률 ${pct(ret)}\n${roast}\n\n${HANDLE} 동학개미 시뮬레이터 #동학개미시뮬레이터\n${GAME_URL}`;
+  const text = `나는 [${full}]${chip ? " · " + chip : ""}\n${r.ending} · 수익률 ${pct(ret)}\n${roast}\n\n동학개미 시뮬레이터 made by ${MAKER}(${HANDLE}) #동학개미시뮬레이터\n${GAME_URL}`;
   const intent = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
   $("end").innerHTML = `
-    <div class="card" aria-label="결과 카드">
-      <span class="k">🚨 ${label(E)} 장 마감 · ${ending}</span>
-      <div class="tier">${tier}${chip ? ` <em>${chip}</em>` : ""}</div>
-      <div class="title">${main}</div>
-      <div class="roast">${roast}</div>
-      <div class="ret ${ret >= 0 ? "pos" : "neg"}">${pct(ret)}</div>
-      <div class="badges">${badges.map(t => `<span>${t}</span>`).join("")}</div>
-      <div class="foot"><span>2020.02 → ${label(E)} · 시드 1,000만 → <b>${won(fin)}원</b></span><b>${HANDLE}</b></div>
-      <div class="url">${GAME_URL.replace("https://","")} 에서 너도 해봐</div>
+    <img class="cardimg" id="cardImg" alt="결과 카드: ${full}, 수익률 ${pct(ret)}">
+    <div class="steps">
+      <button class="save" id="saveCard">① 카드 이미지 저장</button>
+      <a class="post" href="${intent}" target="_blank" rel="noopener">② X에 올리기 (사진 첨부)</a>
     </div>
+    <div class="note" id="endNote">카드를 저장하고 X 글쓰기 창에 사진으로 붙이면 돼. 저장이 안 되면 카드를 길게 눌러 저장해줘.</div>
     <div class="share">
-      <a href="${intent}" target="_blank" rel="noopener">X에 결과 올리기</a>
-      <button id="copy">결과 텍스트 복사</button>
+      <button id="copy">결과 텍스트만 복사</button>
+      <a class="follow" href="https://x.com/intent/follow?screen_name=${HANDLE.slice(1)}" target="_blank" rel="noopener">다음 시즌 알림 받기 · ${MAKER} 팔로우</a>
     </div>
-    <a class="follow" href="https://x.com/intent/follow?screen_name=${HANDLE.slice(1)}" target="_blank" rel="noopener">다음 시즌 서학개미 시뮬레이터 알림 받기 · ${HANDLE} 팔로우</a>
-    <div class="note">카드를 캡처해서 같이 올리면 더 잘 퍼져. 다시 하면 마감 날짜가 바뀐다. 같은 기간 다른 선택은 이랬어:</div>
-    <div class="bench">${bm.map(b => `<div><span>${b[0]}</span><span class="num ${cls(b[1])}">${pct(b[1])}</span></div>`).join("")}<div><span>나</span><span class="num ${cls(ret)}">${pct(ret)}</span></div></div>
+    <a class="maker" href="${PROFILE}" target="_blank" rel="noopener"><span>made by <b>${MAKER}</b> from X</span><span>${HANDLE} 홈 가기 →</span></a>
+    <div class="note">다시 하면 마감 날짜가 바뀐다. 같은 기간 다른 선택은 이랬어:</div>
+    <div class="bench">${r.bm.map(b => `<div><span>${b[0]}</span><span class="num ${cls(b[1])}">${pct(b[1])}</span></div>`).join("")}<div><span>나</span><span class="num ${cls(ret)}">${pct(ret)}</span></div></div>
     <div class="note">가격: 월말 종가(분할·무상증자 반영 수정주가), Yahoo Finance · 비트코인 업비트 원화 시세. 수수료·세금·배당 미반영. 커뮤·지라시 줄은 그 시절 분위기를 재현한 창작이다. 실제 과거 데이터로 만든 게임이며 투자 권유가 아니다.</div>`;
-  $("end").hidden = false; $("play").hidden = true;
-  $("copy").addEventListener("click", () => {
-    navigator.clipboard.writeText(text).then(() => toastEnd("복사했어. X에 붙여넣으면 돼."), () => toastEnd("복사가 막혔어. 텍스트를 직접 선택해서 복사해줘."));
-  });
+  $("end").hidden = false; $("play").hidden = true; $("tape").hidden = true;
   $("next").textContent = "다시 하기 ↺"; $("skip").hidden = true;
   $("progT").textContent = `${label(E)} 장 마감`; $("fill").style.width = "100%";
   window.scrollTo(0,0); save();
+  $("copy").addEventListener("click", () => {
+    navigator.clipboard.writeText(text).then(() => toastEnd("복사했어. X에 붙여넣으면 돼."), () => toastEnd("복사가 막혔어. 텍스트를 직접 선택해서 복사해줘."));
+  });
+  const cv = await drawCard(r);
+  const url = cv.toDataURL("image/png");
+  $("cardImg").src = url;
+  $("saveCard").addEventListener("click", async () => {
+    const name = `동학개미_${main.replace(/\s/g,"")}.png`;
+    try {
+      const blob = await new Promise(res => cv.toBlob(res, "image/png"));
+      const file = new File([blob], name, {type:"image/png"});
+      if (navigator.canShare && navigator.canShare({files:[file]})) { await navigator.share({files:[file], text}); return; }
+    } catch(e){ if (e && e.name === "AbortError") return; }
+    const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    toastEnd("저장했어. 안 보이면 카드를 길게 눌러 저장해줘.");
+  });
 }
-function toastEnd(m){ const n = document.querySelector("#end .note"); if (n) n.textContent = m; }
+function toastEnd(m){ const n = $("endNote"); if (n) n.textContent = m; }
 
 function save(){ try { localStorage.setItem("dongak-s2", JSON.stringify(S)); } catch(e){} }
 function load(){ try { const s = JSON.parse(localStorage.getItem("dongak-s2")); if (s && typeof s.i === "number" && s.q && typeof s.endAt === "number") return s; } catch(e){} return null; }
@@ -538,12 +656,12 @@ function load(){ try { const s = JSON.parse(localStorage.getItem("dongak-s2")); 
 S = load() || fresh();
 if (S.done) { render(); finish(); } else render();
 // ===== 첫 방문 튜토리얼 =====
-function tut(show){ $("tut").hidden = !show; if (show) $("tutGo").focus(); }
+function tut(show){ $("tut").hidden = !show; $("tp1").hidden = false; $("tp2").hidden = true; if (show) $("tutNext").focus(); }
+$("tutNext").addEventListener("click", () => { $("tp1").hidden = true; $("tp2").hidden = false; $("tutGo").focus(); });
 $("tutGo").addEventListener("click", () => { tut(false); try { localStorage.setItem("dongak-tut", "1"); } catch(e){} });
 $("help").addEventListener("click", () => tut(true));
 let seenTut = false; try { seenTut = !!localStorage.getItem("dongak-tut"); } catch(e){}
 if (!seenTut && !S.done && S.i === 0) tut(true);
-
 </script>
 </body>
 </html>
