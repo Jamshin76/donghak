@@ -57,6 +57,8 @@ h1 em{font-style:normal;color:var(--up)}
 .dwrap{display:flex;align-items:center;gap:14px}
 .thint{background:var(--accent);color:var(--accentfg);font-size:13px;font-weight:700;line-height:1.35;padding:8px 12px;border-radius:10px;display:flex;align-items:center;gap:6px;text-align:left}
 .thint br{display:none}
+.antno{font-size:11.5px;color:var(--muted);line-height:1.25;text-align:center}
+.antno b{display:block;font-size:15px;color:var(--fg);font-weight:700}
 .thint .arr{display:inline-block;font-size:20px;animation:nudge .8s ease-in-out infinite alternate}
 @keyframes nudge{from{transform:translateY(-2px) scale(.85)}to{transform:translateY(3px) scale(1.3)}}
 @media (max-width:560px){.dwrap{width:100%;justify-content:space-between}.dwrap .date{order:-1;text-align:left}.thint br{display:inline}}
@@ -186,7 +188,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
       <div class="season">2020.02 코로나 폭락장 출발 · 장 마감은 2024.06~2025.12 중 어느 달 (안 알려줌)</div>
       <div class="season plays" id="plays" hidden></div>
     </div>
-    <div class="dwrap"><div class="thint" id="thint">매수·매도는 <br>아래에서 <span class="arr">⬇</span></div><div class="date" id="date">2020.02<small>시드 1,000만원</small></div></div>
+    <div class="dwrap"><div class="antno" id="antNo" hidden></div><div class="thint" id="thint">매수·매도는 <br>아래에서 <span class="arr">⬇</span></div><div class="date" id="date">2020.02<small>시드 1,000만원</small></div></div>
   </header>
 
   <section class="tape" id="tape" aria-label="이번 달 종목별 등락"></section>
@@ -395,13 +397,15 @@ let tt; function toast(m){ $("toast").textContent = m; clearTimeout(tt); tt = se
 // 플레이 횟수: abacus 무료 카운터(가입 없음). 실제 사이트에서만 올리고, 표시는 어디서나.
 const CNT_URL = "https://abacus.jasoncameron.dev", CNT_NS = "donghak-sim-jamshin76";
 const COUNT_ON = location.hostname === "jamshin76.github.io";
-const counter = (kind, key) => fetch(`${CNT_URL}/${kind}/${CNT_NS}/${key}`).then(r => r.ok ? r.json() : null).then(j => j && typeof j.value === "number" ? j.value : null).catch(() => null);
-const showPlays = n => { if (n) { $("plays").textContent = `🎮 지금까지 ${won(n)}판 시작됨`; $("plays").hidden = false; } };
+const counter = (kind, key) => fetch(`${CNT_URL}/${kind}/${CNT_NS}/${key}`).then(r => r.ok ? r.json() : r.status === 404 ? {value:0} : null).then(j => j && typeof j.value === "number" ? j.value : null).catch(() => null);
+let playsTotal = null;
+const showAnt = () => { const n = S.antNo || (playsTotal !== null ? playsTotal + 1 : null); if (n) { $("antNo").innerHTML = `너는<b>${won(n)}번째</b>개미`; $("antNo").hidden = false; } };
+const showPlays = n => { if (n === null) return; playsTotal = n; if (n) { $("plays").textContent = `🎮 지금까지 ${won(n)}판 시작됨`; $("plays").hidden = false; } showAnt(); };
 counter("get", "start").then(showPlays);
 
 function next(steps){
-  if (S.done) { S = fresh(); $("end").hidden = true; $("play").hidden = false; $("tape").hidden = false; $("help").hidden = false; render(true); window.scrollTo(0,0); tut(true); return; }
-  if (S.i === 0 && !S.counted) { S.counted = true; if (COUNT_ON) counter("hit", "start").then(showPlays); }
+  if (S.done) { S = fresh(); $("end").hidden = true; $("play").hidden = false; $("tape").hidden = false; $("help").hidden = false; render(true); showAnt(); window.scrollTo(0,0); tut(true); return; }
+  if (S.i === 0 && !S.counted) { S.counted = true; if (COUNT_ON) counter("hit", "start").then(n => { if (n) { S.antNo = n; save(); } showPlays(n); }); }
   for (let k = 0; k < (steps || 1); k++) {
     S.hist.push({i:S.i, q:{...S.q}, cash:S.cash, total:value(S.i)});
     S.prevTotal = value(S.i);
