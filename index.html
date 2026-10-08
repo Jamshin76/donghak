@@ -171,6 +171,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .share a,.share button{flex:1;min-width:140px;text-align:center;text-decoration:none;font-weight:700;font-size:15px;padding:12px;border-radius:10px}
 .share a{background:var(--fg);color:var(--bg)}
 .note{font-size:12px;color:var(--muted)}
+.finrank{font-size:14px;font-weight:600;color:var(--fg);text-align:center}
 .intro{background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:12px 14px;font-size:14px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 @keyframes pop{from{transform:translateY(4px);opacity:.4}to{transform:none;opacity:1}}
@@ -183,6 +184,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
       <h1>동학개미 <em>시뮬레이터</em></h1>
       <a class="credit" href="https://x.com/DONTTknow_me" target="_blank" rel="noopener">made by <b>아돈노미</b> from X</a>
       <div class="season">2020.02 코로나 폭락장 출발 · 장 마감은 2024.06~2025.12 중 어느 달 (안 알려줌)</div>
+      <div class="season plays" id="plays" hidden></div>
     </div>
     <div class="dwrap"><div class="thint" id="thint">매수·매도는 <br>아래에서 <span class="arr">⬇</span></div><div class="date" id="date">2020.02<small>시드 1,000만원</small></div></div>
   </header>
@@ -390,8 +392,16 @@ function sell(id, frac){
 }
 let tt; function toast(m){ $("toast").textContent = m; clearTimeout(tt); tt = setTimeout(() => $("toast").textContent = "", 3500); }
 
+// 플레이 횟수: abacus 무료 카운터(가입 없음). 실제 사이트에서만 올리고, 표시는 어디서나.
+const CNT_URL = "https://abacus.jasoncameron.dev", CNT_NS = "donghak-sim-jamshin76";
+const COUNT_ON = location.hostname === "jamshin76.github.io";
+const counter = (kind, key) => fetch(`${CNT_URL}/${kind}/${CNT_NS}/${key}`).then(r => r.ok ? r.json() : null).then(j => j && typeof j.value === "number" ? j.value : null).catch(() => null);
+const showPlays = n => { if (n) { $("plays").textContent = `🎮 지금까지 ${won(n)}판 시작됨`; $("plays").hidden = false; } };
+counter("get", "start").then(showPlays);
+
 function next(steps){
   if (S.done) { S = fresh(); $("end").hidden = true; $("play").hidden = false; $("tape").hidden = false; $("help").hidden = false; render(true); window.scrollTo(0,0); tut(true); return; }
+  if (S.i === 0 && !S.counted) { S.counted = true; if (COUNT_ON) counter("hit", "start").then(showPlays); }
   for (let k = 0; k < (steps || 1); k++) {
     S.hist.push({i:S.i, q:{...S.q}, cash:S.cash, total:value(S.i)});
     S.prevTotal = value(S.i);
@@ -676,6 +686,7 @@ async function finish(){
     <div class="steps">
       <button class="copy" id="copyLink">📋 내 칭호+링크 복사</button>
     </div>
+    <div class="note finrank" id="finRank" hidden></div>
     <div class="note" id="endNote">올리는 링크엔 내 칭호 이미지가 미리보기로 붙어. 카톡·커뮤엔 칭호+링크 복사해서 붙여넣으면 끝.</div>
     <div class="share">
       <a class="follow" href="https://x.com/intent/follow?screen_name=${HANDLE.slice(1)}" target="_blank" rel="noopener">다음 시즌 알림 받기 · ${MAKER} 팔로우</a>
@@ -687,6 +698,10 @@ async function finish(){
   $("end").hidden = false; $("play").hidden = true; $("tape").hidden = true; $("help").hidden = true;
   $("next").textContent = "다시 하기 ↺"; $("skip").hidden = true;
   $("progT").textContent = `${label(E)} 장 마감`; $("fill").style.width = "100%";
+  if (!S.finCounted) {
+    S.finCounted = true;
+    if (COUNT_ON) counter("hit", "finish").then(n => { if (n && $("finRank")) { $("finRank").textContent = `🏁 너는 장 마감까지 버틴 ${won(n)}번째 개미야.`; $("finRank").hidden = false; } });
+  }
   window.scrollTo(0,0); save();
   const cv = await drawCard(r);
   const url = cv.toDataURL("image/png");
